@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 
 interface Service {
   id: string;
@@ -131,12 +132,23 @@ export default function MakerDashboard() {
       <div className="bg-[#0a1929] p-8 pb-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-4xl font-semibold text-white heading-font">
-              Hello, Maker
-            </h1>
+            <div className="flex items-center gap-6">
+              <Link
+                href="/"
+                className="bg-[#1a2332] hover:bg-[#253242] text-white px-6 py-3 border border-[#1a2332] hover:border-[#253242] transition-colors font-medium heading-font"
+              >
+                Home
+              </Link>
+              <h1 className="text-4xl font-semibold text-white heading-font">
+                Hello, Maker
+              </h1>
+            </div>
             <div className="flex items-center gap-4">
               {/* Notification Button for New Requests */}
-              <button className="relative bg-[#1a2332] hover:bg-[#253242] text-white px-6 py-3 border border-[#1a2332] hover:border-[#253242] transition-colors font-medium flex items-center gap-2">
+              <Link
+                href="/maker/new-requests"
+                className="relative bg-[#1a2332] hover:bg-[#253242] text-white px-6 py-3 border border-[#1a2332] hover:border-[#253242] transition-colors font-medium flex items-center gap-2"
+              >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
@@ -146,7 +158,7 @@ export default function MakerDashboard() {
                     {newRequestsCount}
                   </span>
                 )}
-              </button>
+              </Link>
               {/* Profile Icon */}
               <button className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity">
                 <div className="w-10 h-10 bg-[#1a2332] border border-[#253242] flex items-center justify-center">
@@ -259,7 +271,7 @@ export default function MakerDashboard() {
             </div>
 
             {/* Long-term Commissions Section - Scroll trigger */}
-            <div ref={(el) => (sectionsRef.current[0] = el)} className="mb-8">
+            <div ref={(el) => { sectionsRef.current[0] = el; }} className="mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 mb-4 heading-font">
                 Long-term Commissions
               </h2>
@@ -293,7 +305,7 @@ export default function MakerDashboard() {
             </div>
 
             {/* Ongoing Services Section - Separate */}
-            <div ref={(el) => (sectionsRef.current[1] = el)} className="mb-8">
+            <div ref={(el) => { sectionsRef.current[1] = el; }} className="mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 mb-4 heading-font">
                 Ongoing Services
               </h2>
@@ -332,7 +344,7 @@ export default function MakerDashboard() {
             </div>
 
             {/* Recommendations Section - Quick Services and Open Requests only */}
-            <div ref={(el) => (sectionsRef.current[2] = el)} className="mb-8">
+            <div ref={(el) => { sectionsRef.current[2] = el; }} className="mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 mb-4 heading-font">
                 Recommendations
               </h2>
@@ -376,8 +388,43 @@ export default function MakerDashboard() {
         )}
 
         {activeTab === 'devices' && (
-          <div className="bg-[#0a1929] p-8 text-center border border-[#1a2332]">
-            <p className="text-white text-lg">Devices content coming soon...</p>
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6 heading-font">
+              Manufacturing Devices
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                { name: 'Bambu Lab X1 Carbon', type: '3D Printer', status: 'Active' },
+                { name: 'Prusa i3 MK3S+', type: '3D Printer', status: 'Active' },
+                { name: 'Creality Ender 3 V2', type: '3D Printer', status: 'Active' },
+                { name: 'Formlabs Form 3', type: '3D Printer (SLA)', status: 'Active' },
+                { name: 'Tormach PCNC 440', type: 'CNC Machine', status: 'Active' },
+                { name: 'ShopBot Desktop', type: 'CNC Router', status: 'Active' },
+                { name: 'HAAS Mini Mill', type: 'CNC Milling', status: 'Active' },
+                { name: 'Epilog Fusion Pro', type: 'Laser Cutter', status: 'Active' },
+                { name: 'Glowforge Pro', type: 'Laser Cutter', status: 'Active' },
+                { name: 'Arburg Allrounder', type: 'Injection Molder', status: 'Active' },
+                { name: 'Boy Machines 15A', type: 'Injection Molder', status: 'Active' },
+                { name: 'Thermwood M40', type: 'CNC Router', status: 'Active' },
+              ].map((device, index) => (
+                <div key={index} className="bg-[#0a1929] p-6 border border-[#1a2332]">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="text-lg font-semibold text-white mb-1">{device.name}</h3>
+                      <span className="text-[#9ca3af] text-sm">{device.type}</span>
+                    </div>
+                    <span className="text-[#9ca3af] text-xs bg-[#1a2332] px-2 py-1 border border-[#253242]">
+                      {device.status}
+                    </span>
+                  </div>
+                  <div className="pt-4 border-t border-[#1a2332]">
+                    <button className="w-full bg-[#1a2332] hover:bg-[#253242] text-white px-4 py-2 border border-[#253242] hover:border-[#3a4552] transition-colors text-sm font-medium">
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -388,8 +435,20 @@ export default function MakerDashboard() {
         )}
 
         {activeTab === 'workflow' && (
-          <div className="bg-[#0a1929] p-8 text-center border border-[#1a2332]">
-            <p className="text-white text-lg">Current Workflow (Build Scheduling) coming soon...</p>
+          <div className="space-y-6">
+            <div className="bg-[#0a1929] p-8 border border-[#1a2332]">
+              <h2 className="text-3xl font-semibold text-white mb-6 heading-font">
+                Current Workflow
+              </h2>
+              <div className="max-w-3xl space-y-4">
+                <p className="text-white text-lg leading-relaxed">
+                  Here we will schedule your tasks optimally for the week, ensuring your profit.
+                </p>
+                <p className="text-[#9ca3af] text-base leading-relaxed">
+                  This will make sure devices and time are optimized.
+                </p>
+              </div>
+            </div>
           </div>
         )}
         </div>
