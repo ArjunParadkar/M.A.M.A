@@ -18,13 +18,13 @@ export default function Home() {
                 Maker Dashboard
               </Link>
               <Link
-                href="/login"
+                href="/auth/sign-in"
                 className="bg-[#1a2332] hover:bg-[#253242] text-white px-6 py-3 border border-[#1a2332] hover:border-[#253242] transition-colors font-medium"
               >
-                Login
+                Sign In
               </Link>
               <Link
-                href="/signup"
+                href="/auth/sign-up"
                 className="bg-[#1a2332] hover:bg-[#253242] text-white px-6 py-3 border border-[#1a2332] hover:border-[#253242] transition-colors font-medium"
               >
                 Sign Up
@@ -249,13 +249,13 @@ export default function Home() {
           </p>
           <div className="flex gap-4 justify-center">
             <Link
-              href="/signup?role=client"
+              href="/auth/sign-up"
               className="bg-[#1a2332] hover:bg-[#253242] text-white px-8 py-4 border border-[#1a2332] hover:border-[#253242] transition-colors font-medium"
             >
               I'm a Client
             </Link>
             <Link
-              href="/signup?role=maker"
+              href="/auth/sign-up"
               className="bg-[#1a2332] hover:bg-[#253242] text-white px-8 py-4 border border-[#1a2332] hover:border-[#253242] transition-colors font-medium"
             >
               I'm a Maker
