@@ -2,16 +2,15 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 
 export default function ClientProfileForm({ user }: { user: any }) {
   const router = useRouter();
-  const supabase = createClient();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [clientType, setClientType] = useState<'company' | 'individual'>('individual');
+  const [clientType, setClientType] = useState<'individual' | 'small_business' | 'corporation'>('individual');
   const [name, setName] = useState(user?.user_metadata?.full_name || user?.email?.split('@')[0] || '');
   const [companyName, setCompanyName] = useState('');
   const [phone, setPhone] = useState('');
@@ -28,7 +27,7 @@ export default function ClientProfileForm({ user }: { user: any }) {
       return;
     }
 
-    if (clientType === 'company' && !companyName) {
+    if ((clientType === 'small_business' || clientType === 'corporation') && !companyName?.trim()) {
       setError('Company name is required');
       return;
     }
@@ -38,9 +37,15 @@ export default function ClientProfileForm({ user }: { user: any }) {
       return;
     }
 
+    if (!isSupabaseConfigured()) {
+      setError('Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
+      const supabase = createClient();
 
       // Update profile
       const { error: profileError } = await supabase
@@ -49,7 +54,7 @@ export default function ClientProfileForm({ user }: { user: any }) {
           role: 'client',
           name,
           client_type: clientType,
-          company_name: clientType === 'company' ? companyName : null,
+          company_name: (clientType === 'small_business' || clientType === 'corporation') ? companyName : null,
           phone: phone || null,
           address,
           city,
@@ -88,17 +93,12 @@ export default function ClientProfileForm({ user }: { user: any }) {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-white mb-4 font-medium">Account Type *</label>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    setClientType('individual');
-                    setCompanyName('');
-                  }}
+                  onClick={() => { setClientType('individual'); setCompanyName(''); }}
                   className={`p-6 border transition-colors text-left ${
-                    clientType === 'individual'
-                      ? 'bg-[#253242] border-white text-white'
-                      : 'bg-[#1a2332] border-[#253242] text-[#9ca3af] hover:border-[#3a4552]'
+                    clientType === 'individual' ? 'bg-[#253242] border-white text-white' : 'bg-[#1a2332] border-[#253242] text-[#9ca3af] hover:border-[#3a4552]'
                   }`}
                 >
                   <h3 className="font-semibold mb-2">Individual</h3>
@@ -106,34 +106,42 @@ export default function ClientProfileForm({ user }: { user: any }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setClientType('company')}
+                  onClick={() => setClientType('small_business')}
                   className={`p-6 border transition-colors text-left ${
-                    clientType === 'company'
-                      ? 'bg-[#253242] border-white text-white'
-                      : 'bg-[#1a2332] border-[#253242] text-[#9ca3af] hover:border-[#3a4552]'
+                    clientType === 'small_business' ? 'bg-[#253242] border-white text-white' : 'bg-[#1a2332] border-[#253242] text-[#9ca3af] hover:border-[#3a4552]'
                   }`}
                 >
-                  <h3 className="font-semibold mb-2">Company</h3>
-                  <p className="text-sm">Business and commercial orders</p>
+                  <h3 className="font-semibold mb-2">Small Business</h3>
+                  <p className="text-sm">Startups, shops, studios</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setClientType('corporation')}
+                  className={`p-6 border transition-colors text-left ${
+                    clientType === 'corporation' ? 'bg-[#253242] border-white text-white' : 'bg-[#1a2332] border-[#253242] text-[#9ca3af] hover:border-[#3a4552]'
+                  }`}
+                >
+                  <h3 className="font-semibold mb-2">Corporation</h3>
+                  <p className="text-sm">Enterprises and large orders</p>
                 </button>
               </div>
             </div>
 
             <div>
               <label className="block text-white mb-2 font-medium">
-                {clientType === 'company' ? 'Contact Name' : 'Name'} *
+                {(clientType === 'small_business' || clientType === 'corporation') ? 'Contact Name' : 'Name'} *
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full bg-[#1a2332] border border-[#253242] text-white px-4 py-3 focus:outline-none focus:border-[#3a4552]"
-                placeholder={clientType === 'company' ? 'John Doe' : 'Your name'}
+                placeholder={(clientType === 'small_business' || clientType === 'corporation') ? 'John Doe' : 'Your name'}
                 required
               />
             </div>
 
-            {clientType === 'company' && (
+            {(clientType === 'small_business' || clientType === 'corporation') && (
               <div>
                 <label className="block text-white mb-2 font-medium">Company Name *</label>
                 <input
@@ -141,8 +149,8 @@ export default function ClientProfileForm({ user }: { user: any }) {
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   className="w-full bg-[#1a2332] border border-[#253242] text-white px-4 py-3 focus:outline-none focus:border-[#3a4552]"
-                  placeholder="Acme Corporation"
-                  required={clientType === 'company'}
+                  placeholder={clientType === 'corporation' ? 'Acme Corp.' : 'My Studio LLC'}
+                  required
                 />
               </div>
             )}

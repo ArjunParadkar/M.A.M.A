@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import { getAuthErrorMessage } from '@/lib/authErrors';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -20,7 +21,11 @@ export default function SignInPage() {
     try {
       setLoading(true);
       setError(null);
-
+      if (!isSupabaseConfigured()) {
+        setError('Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to apps/web/.env.local and restart the dev server.');
+        setLoading(false);
+        return;
+      }
       const supabase = createClient();
 
       const { data, error: signInError } = await supabase.auth.signInWithOAuth({
@@ -35,8 +40,8 @@ export default function SignInPage() {
       });
 
       if (signInError) throw signInError;
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign in with Google. Make sure Supabase credentials are configured.');
+    } catch (err) {
+      setError(getAuthErrorMessage(err, 'Failed to sign in with Google. Make sure Supabase credentials are configured.'));
       setLoading(false);
     }
   };
@@ -47,7 +52,11 @@ export default function SignInPage() {
     try {
       setLoading(true);
       setError(null);
-
+      if (!isSupabaseConfigured()) {
+        setError('Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to apps/web/.env.local and restart the dev server.');
+        setLoading(false);
+        return;
+      }
       const supabase = createClient();
 
       const { data, error: signInError } = await supabase.auth.signInWithPassword({

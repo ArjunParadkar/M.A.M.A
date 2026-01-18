@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import { deviceTypes, commonDevices } from '@/lib/manufacturingDevices';
 
 interface Device {
   name: string;
@@ -11,31 +12,17 @@ interface Device {
   status: 'active' | 'inactive' | 'maintenance';
 }
 
-const deviceTypes = [
-  { value: '3d_printer', label: '3D Printer' },
-  { value: 'cnc_machine', label: 'CNC Machine' },
-  { value: 'laser_cutter', label: 'Laser Cutter' },
-  { value: 'injection_molder', label: 'Injection Molder' },
-  { value: 'other', label: 'Other' },
-];
-
-const commonDevices = {
-  '3d_printer': ['Bambu Lab X1 Carbon', 'Prusa i3 MK3S+', 'Creality Ender 3 V2', 'Formlabs Form 3', 'Ultimaker S5', 'Other'],
-  'cnc_machine': ['Tormach PCNC 440', 'ShopBot Desktop', 'HAAS Mini Mill', 'Thermwood M40', 'Other'],
-  'laser_cutter': ['Epilog Fusion Pro', 'Glowforge Pro', 'Trotec Speedy', 'Other'],
-  'injection_molder': ['Arburg Allrounder', 'Boy Machines 15A', 'Other'],
-};
-
 export default function ManufacturerProfileForm({ user }: { user: any }) {
   const router = useRouter();
-  const supabase = createClient();
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Step 1: Basic Info
+  // Step 1: Basic Info + Business Type
   const [name, setName] = useState(user?.user_metadata?.full_name || user?.email?.split('@')[0] || '');
+  const [businessType, setBusinessType] = useState<'individual' | 'small_business' | 'corporation'>('individual');
+  const [companyName, setCompanyName] = useState('');
   const [phone, setPhone] = useState('');
   const [bio, setBio] = useState('');
 
@@ -51,6 +38,7 @@ export default function ManufacturerProfileForm({ user }: { user: any }) {
     name: '',
     type: '',
     model: '',
+    customName: '', // when model is "Other"
     status: 'active' as const,
   });
 
@@ -61,13 +49,18 @@ export default function ManufacturerProfileForm({ user }: { user: any }) {
   const materialOptions = ['PLA', 'ABS', 'PETG', 'TPU', 'Nylon', 'Metal', 'Wood', 'Acrylic', 'Other'];
 
   const addDevice = () => {
-    if (!newDevice.name || !newDevice.type) {
-      setError('Device name and type are required');
+    if (!newDevice.type) {
+      setError('Device type is required');
+      return;
+    }
+    const displayName = newDevice.name === 'Other' ? (newDevice.customName?.trim() || 'Other') : newDevice.name;
+    if (!displayName) {
+      setError('Select a model or enter a custom device name');
       return;
     }
 
-    setDevices([...devices, { ...newDevice }]);
-    setNewDevice({ name: '', type: '', model: '', status: 'active' });
+    setDevices([...devices, { name: displayName, type: newDevice.type, model: newDevice.name, status: newDevice.status }]);
+    setNewDevice({ name: '', type: '', model: '', customName: '', status: 'active' });
     setError(null);
   };
 
@@ -88,6 +81,10 @@ export default function ManufacturerProfileForm({ user }: { user: any }) {
       setError('Please fill in all required fields');
       return;
     }
+    if ((businessType === 'small_business' || businessType === 'corporation') && !companyName?.trim()) {
+      setError('Company / shop name is required');
+      return;
+    }
 
     if (devices.length === 0) {
       setError('Please add at least one device');
@@ -99,9 +96,15 @@ export default function ManufacturerProfileForm({ user }: { user: any }) {
       return;
     }
 
+    if (!isSupabaseConfigured()) {
+      setError('Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
+      const supabase = createClient();
 
       // Update profile
       const { error: profileError } = await supabase
@@ -109,6 +112,8 @@ export default function ManufacturerProfileForm({ user }: { user: any }) {
         .update({
           role: 'manufacturer',
           name,
+          business_type: businessType,
+          company_name: businessType !== 'individual' ? companyName || null : null,
           phone: phone || null,
           bio: bio || null,
           address,
@@ -183,11 +188,40 @@ export default function ManufacturerProfileForm({ user }: { user: any }) {
             </div>
           )}
 
-          {/* Step 1: Basic Info */}
+          {/* Step 1: Basic Info + Business Type */}
           {step === 1 && (
             <div className="space-y-6">
               <div>
-                <label className="block text-white mb-2 font-medium">Name *</label>
+                <label className="block text-white mb-3 font-medium">Business Type *</label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {(['individual', 'small_business', 'corporation'] as const).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => { setBusinessType(t); if (t === 'individual') setCompanyName(''); }}
+                      className={`p-4 border text-left transition-colors ${
+                        businessType === t ? 'bg-[#253242] border-white text-white' : 'bg-[#1a2332] border-[#253242] text-[#9ca3af] hover:border-[#3a4552]'
+                      }`}
+                    >
+                      <span className="font-medium">{t === 'individual' ? 'Solo / Individual' : t === 'small_business' ? 'Small Business' : 'Corporation'}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {(businessType === 'small_business' || businessType === 'corporation') && (
+                <div>
+                  <label className="block text-white mb-2 font-medium">Company / Shop Name *</label>
+                  <input
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    className="w-full bg-[#1a2332] border border-[#253242] text-white px-4 py-3 focus:outline-none focus:border-[#3a4552]"
+                    placeholder={businessType === 'corporation' ? 'Acme Manufacturing Inc.' : 'My Makerspace LLC'}
+                  />
+                </div>
+              )}
+              <div>
+                <label className="block text-white mb-2 font-medium">Your Name *</label>
                 <input
                   type="text"
                   value={name}
@@ -330,19 +364,33 @@ export default function ManufacturerProfileForm({ user }: { user: any }) {
                   </div>
 
                   {newDevice.type && (
-                    <div>
-                      <label className="block text-white mb-2 font-medium">Device Model *</label>
-                      <select
-                        value={newDevice.name}
-                        onChange={(e) => setNewDevice({ ...newDevice, name: e.target.value })}
-                        className="w-full bg-black border border-[#253242] text-white px-4 py-3 focus:outline-none focus:border-[#3a4552]"
-                      >
-                        <option value="">Select model</option>
-                        {commonDevices[newDevice.type as keyof typeof commonDevices]?.map(model => (
-                          <option key={model} value={model}>{model}</option>
-                        ))}
-                      </select>
-                    </div>
+                    <>
+                      <div>
+                        <label className="block text-white mb-2 font-medium">Device Model *</label>
+                        <select
+                          value={newDevice.name}
+                          onChange={(e) => setNewDevice({ ...newDevice, name: e.target.value, customName: e.target.value === 'Other' ? newDevice.customName : '' })}
+                          className="w-full bg-black border border-[#253242] text-white px-4 py-3 focus:outline-none focus:border-[#3a4552]"
+                        >
+                          <option value="">Select model</option>
+                          {commonDevices[newDevice.type]?.map(model => (
+                            <option key={model} value={model}>{model}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {newDevice.name === 'Other' && (
+                        <div>
+                          <label className="block text-white mb-2 font-medium">Custom Device Name *</label>
+                          <input
+                            type="text"
+                            value={newDevice.customName}
+                            onChange={(e) => setNewDevice({ ...newDevice, customName: e.target.value })}
+                            className="w-full bg-black border border-[#253242] text-white px-4 py-3 focus:outline-none focus:border-[#3a4552]"
+                            placeholder="e.g. Custom CNC, In-house 3D printer"
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
 
                   <button

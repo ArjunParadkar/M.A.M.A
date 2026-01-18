@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import { getAuthErrorMessage } from '@/lib/authErrors';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -96,7 +97,11 @@ function ManufacturerSignUp({ onBack }: { onBack: () => void }) {
     try {
       setLoading(true);
       setError(null);
-
+      if (!isSupabaseConfigured()) {
+        setError('Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to apps/web/.env.local and restart the dev server.');
+        setLoading(false);
+        return;
+      }
       const supabase = createClient();
 
       const { data, error: signUpError } = await supabase.auth.signInWithOAuth({
@@ -111,17 +116,10 @@ function ManufacturerSignUp({ onBack }: { onBack: () => void }) {
       });
 
       if (signUpError) throw signUpError;
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign up with Google. Make sure Supabase credentials are configured.');
+    } catch (err) {
+      setError(getAuthErrorMessage(err, 'Failed to sign up with Google. Make sure Supabase credentials are configured.'));
       setLoading(false);
     }
-  };
-
-  const checkEmailExists = async (emailToCheck: string) => {
-    const supabase = createClient();
-    // Check if email exists in auth.users (via admin API or by attempting sign in)
-    // For now, we'll let Supabase handle duplicate email errors
-    return false;
   };
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
@@ -140,7 +138,11 @@ function ManufacturerSignUp({ onBack }: { onBack: () => void }) {
     try {
       setLoading(true);
       setError(null);
-
+      if (!isSupabaseConfigured()) {
+        setError('Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to apps/web/.env.local and restart the dev server.');
+        setLoading(false);
+        return;
+      }
       const supabase = createClient();
 
       // Check if email already exists
@@ -337,7 +339,11 @@ function ClientSignUp({ onBack }: { onBack: () => void }) {
     try {
       setLoading(true);
       setError(null);
-
+      if (!isSupabaseConfigured()) {
+        setError('Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to apps/web/.env.local and restart the dev server.');
+        setLoading(false);
+        return;
+      }
       const supabase = createClient();
 
       const { data, error: signUpError } = await supabase.auth.signInWithOAuth({
@@ -352,8 +358,8 @@ function ClientSignUp({ onBack }: { onBack: () => void }) {
       });
 
       if (signUpError) throw signUpError;
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign up with Google. Make sure Supabase credentials are configured.');
+    } catch (err) {
+      setError(getAuthErrorMessage(err, 'Failed to sign up with Google. Make sure Supabase credentials are configured.'));
       setLoading(false);
     }
   };
@@ -374,7 +380,11 @@ function ClientSignUp({ onBack }: { onBack: () => void }) {
     try {
       setLoading(true);
       setError(null);
-
+      if (!isSupabaseConfigured()) {
+        setError('Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to apps/web/.env.local and restart the dev server.');
+        setLoading(false);
+        return;
+      }
       const supabase = createClient();
 
       // Check if email already exists
