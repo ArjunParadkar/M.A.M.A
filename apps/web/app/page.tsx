@@ -18,6 +18,12 @@ export default function Home() {
                 Maker Dashboard
               </Link>
               <Link
+                href="/client/dashboard"
+                className="bg-[#1a2332] hover:bg-[#253242] text-white px-6 py-3 border border-[#1a2332] hover:border-[#253242] transition-colors font-medium heading-font"
+              >
+                Client Dashboard
+              </Link>
+              <Link
                 href="/auth/sign-in"
                 className="bg-[#1a2332] hover:bg-[#253242] text-white px-6 py-3 border border-[#1a2332] hover:border-[#253242] transition-colors font-medium"
               >

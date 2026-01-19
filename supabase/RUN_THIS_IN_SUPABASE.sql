@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS manufacturers (
   materials TEXT[] NOT NULL DEFAULT '{}',
   tolerance_tier tolerance_tier NOT NULL DEFAULT 'medium',
   capacity_score FLOAT NOT NULL DEFAULT 0.5 CHECK (capacity_score >= 0 AND capacity_score <= 1),
+  quality_score FLOAT NOT NULL DEFAULT 0.5 CHECK (quality_score >= 0 AND quality_score <= 1),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -129,6 +130,7 @@ ALTER TABLE manufacturers ADD COLUMN IF NOT EXISTS average_rating FLOAT DEFAULT 
 ALTER TABLE manufacturers ADD COLUMN IF NOT EXISTS total_jobs_completed INTEGER DEFAULT 0;
 ALTER TABLE manufacturers ADD COLUMN IF NOT EXISTS total_ratings_received INTEGER DEFAULT 0;
 ALTER TABLE manufacturers ADD COLUMN IF NOT EXISTS total_earnings FLOAT DEFAULT 0.0;
+ALTER TABLE manufacturers ADD COLUMN IF NOT EXISTS quality_score FLOAT DEFAULT 0.5 CHECK (quality_score >= 0 AND quality_score <= 1);
 
 -- 5. Manufacturer devices
 CREATE TABLE IF NOT EXISTS manufacturer_devices (

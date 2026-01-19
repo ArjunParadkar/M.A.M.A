@@ -77,6 +77,7 @@ ALTER TABLE manufacturers ADD COLUMN IF NOT EXISTS average_rating FLOAT DEFAULT 
 ALTER TABLE manufacturers ADD COLUMN IF NOT EXISTS total_jobs_completed INTEGER DEFAULT 0;
 ALTER TABLE manufacturers ADD COLUMN IF NOT EXISTS total_ratings_received INTEGER DEFAULT 0;
 ALTER TABLE manufacturers ADD COLUMN IF NOT EXISTS total_earnings FLOAT DEFAULT 0.0;
+ALTER TABLE manufacturers ADD COLUMN IF NOT EXISTS quality_score FLOAT DEFAULT 0.5 CHECK (quality_score >= 0 AND quality_score <= 1);
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_payment_methods_user_id ON payment_methods(user_id);

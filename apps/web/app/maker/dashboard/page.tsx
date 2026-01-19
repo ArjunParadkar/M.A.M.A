@@ -9,6 +9,10 @@ interface Service {
   deadline: string;
   attempts: number;
   type?: 'ongoing' | 'open-request' | 'quick-service';
+  expectedTime?: string; // e.g., "12 hours", "3 days"
+  materials?: string; // e.g., "6061-T6 Aluminum"
+  machine?: string; // e.g., "CNC Milling", "3D Printer"
+  extendedDescription?: string; // Full description from client
 }
 
 interface QuickService {
@@ -27,17 +31,88 @@ interface LongTermCommission {
   completedThisWeek: number;
 }
 
-const mockServices: Service[] = [
-  { id: '1', clientName: 'Acme Corp', deadline: '2026-01-25', attempts: 2, type: 'ongoing' },
-  { id: '2', clientName: 'TechStart Inc', deadline: '2026-01-28', attempts: 1, type: 'ongoing' },
-  { id: '3', clientName: 'Industrial Solutions', deadline: '2026-02-01', attempts: 3, type: 'ongoing' },
-  { id: '4', clientName: 'Global Manufacturing', deadline: '2026-02-05', attempts: 1, type: 'ongoing' },
+// Ongoing Services = Active Jobs (from active_jobs table)
+const mockActiveJobs: Service[] = [
+  { 
+    id: 'active1', 
+    clientName: 'Acme Corp', 
+    deadline: '2026-01-25', 
+    attempts: 2, 
+    type: 'ongoing',
+    expectedTime: '12 hours',
+    materials: '6061-T6 Aluminum',
+    machine: 'CNC Milling',
+    extendedDescription: 'Precision bracket assembly for mounting system. Must maintain ±0.005" tolerance throughout. Requires smooth finish with no burrs. Parts will be used in aerospace application, so quality is critical. All edges must be deburred and cleaned.',
+  },
+  { 
+    id: 'active2', 
+    clientName: 'TechStart Inc', 
+    deadline: '2026-01-28', 
+    attempts: 1, 
+    type: 'ongoing',
+    expectedTime: '8 hours',
+    materials: '316 Stainless Steel',
+    machine: 'CNC Turning',
+    extendedDescription: 'Housing component for electronic device enclosure. Requires precise threading for M6 screws. Surface finish must be smooth with no visible tool marks. Material must be corrosion resistant for outdoor use.',
+  },
+  { 
+    id: 'active3', 
+    clientName: 'Industrial Solutions', 
+    deadline: '2026-02-01', 
+    attempts: 3, 
+    type: 'ongoing',
+    expectedTime: '20 hours',
+    materials: 'ABS Plastic',
+    machine: '3D Printer (FDM)',
+    extendedDescription: 'Prototype casing for industrial sensor housing. Requires 100% infill for structural integrity. Layer height should be 0.2mm maximum. Must fit together with existing components - dimensions critical. No support material should remain inside.',
+  },
+  { 
+    id: 'active4', 
+    clientName: 'Global Manufacturing', 
+    deadline: '2026-02-05', 
+    attempts: 1, 
+    type: 'ongoing',
+    expectedTime: '15 hours',
+    materials: 'Polycarbonate',
+    machine: 'Injection Molding',
+    extendedDescription: 'Clear cover plate for display module. Must be optically clear with no bubbles or imperfections. Edge chamfers required for safety. All dimensions must be within ±0.003" of specification. Clean room handling preferred.',
+  },
 ];
 
 const mockOpenRequests: Service[] = [
-  { id: '7', clientName: 'Open Project Alpha', deadline: '2026-02-10', attempts: 0, type: 'open-request' },
-  { id: '8', clientName: 'Open Project Beta', deadline: '2026-02-12', attempts: 0, type: 'open-request' },
-  { id: '9', clientName: 'Open Project Gamma', deadline: '2026-02-15', attempts: 0, type: 'open-request' },
+  { 
+    id: '7', 
+    clientName: 'Open Project Alpha', 
+    deadline: '2026-02-10', 
+    attempts: 0, 
+    type: 'open-request',
+    expectedTime: '18 hours',
+    materials: '7075 Aluminum',
+    machine: 'CNC Milling',
+    extendedDescription: 'Custom mounting bracket for heavy-duty application. Requires multiple tapped holes and precise alignment. Must support load of 500 lbs. Material heat treatment may be required. Delivery includes full inspection report.',
+  },
+  { 
+    id: '8', 
+    clientName: 'Open Project Beta', 
+    deadline: '2026-02-12', 
+    attempts: 0, 
+    type: 'open-request',
+    expectedTime: '10 hours',
+    materials: 'Delrin (Acetal)',
+    machine: 'CNC Machining',
+    extendedDescription: 'Low-friction wear component for mechanical assembly. Requires tight tolerances on sliding surfaces. Material must have low moisture absorption. All surfaces must be smooth with Ra < 0.8 μm.',
+  },
+  { 
+    id: '9', 
+    clientName: 'Open Project Gamma', 
+    deadline: '2026-02-15', 
+    attempts: 0, 
+    type: 'open-request',
+    expectedTime: '6 hours',
+    materials: 'Brass',
+    machine: 'CNC Turning',
+    extendedDescription: 'Precision threaded component for fluid system. Threads must be clean and free of burrs. Internal passages must be smooth. Pressure tested to 100 PSI required. All deburring and cleaning must be thorough.',
+  },
 ];
 
 const mockQuickServices: QuickService[] = [
@@ -144,6 +219,18 @@ export default function MakerDashboard() {
               </h1>
             </div>
             <div className="flex items-center gap-4">
+              <Link
+                href="/maker/jobs"
+                className="bg-[#1a2332] hover:bg-[#253242] text-white px-4 py-2 border border-[#1a2332] hover:border-[#253242] transition-colors font-medium text-sm"
+              >
+                View Jobs
+              </Link>
+              <Link
+                href="/maker/jobs/active"
+                className="bg-[#1a2332] hover:bg-[#253242] text-white px-4 py-2 border border-[#1a2332] hover:border-[#253242] transition-colors font-medium text-sm"
+              >
+                Active Work
+              </Link>
               {/* Notification Button for New Requests */}
               <Link
                 href="/maker/new-requests"
@@ -192,7 +279,7 @@ export default function MakerDashboard() {
                     : 'text-[#9ca3af] hover:text-white'
                 }`}
               >
-                Devices
+                Devices Running
               </button>
               <button
                 onClick={() => setActiveTab('shop')}
@@ -234,11 +321,11 @@ export default function MakerDashboard() {
                 {/* Devices */}
                 <div className="bg-[#0a1929] p-6 border border-[#1a2332]">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[#9ca3af] text-sm font-medium">Devices</span>
+                    <span className="text-[#9ca3af] text-sm font-medium">Devices Running</span>
                   </div>
                   <p className="text-3xl font-semibold text-white mb-4">12</p>
                   <button className="w-full bg-[#1a2332] hover:bg-[#253242] text-white px-4 py-2 border border-[#253242] hover:border-[#3a4552] transition-colors text-sm font-medium">
-                    See devices
+                    See Devices
                   </button>
                 </div>
                 
@@ -279,7 +366,11 @@ export default function MakerDashboard() {
                 {mockLongTermCommissions.map((commission) => {
                   const percentage = (commission.completedThisWeek / commission.assignedThisWeek) * 100;
                   return (
-                    <div key={commission.id} className="bg-[#0a1929] p-6 border border-[#1a2332]">
+                    <Link 
+                      key={commission.id} 
+                      href={`/maker/commissions/${commission.id}`}
+                      className="bg-[#0a1929] p-6 border border-[#1a2332] hover:border-[#3a4552] transition-colors cursor-pointer"
+                    >
                       <h3 className="text-lg font-semibold text-white mb-4">{commission.productName}</h3>
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
@@ -298,7 +389,7 @@ export default function MakerDashboard() {
                           <span className="text-[#9ca3af] text-xs">{Math.round(percentage)}% Complete</span>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>
@@ -326,7 +417,7 @@ export default function MakerDashboard() {
                   className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
                   style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
-                  {mockServices.map((service) => (
+                  {mockActiveJobs.map((service) => (
                     <ServiceCard key={service.id} service={service} />
                   ))}
                 </div>
@@ -390,22 +481,22 @@ export default function MakerDashboard() {
         {activeTab === 'devices' && (
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-6 heading-font">
-              Manufacturing Devices
+              Devices Running (Current Workflow)
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
-                { name: 'Bambu Lab X1 Carbon', type: '3D Printer', status: 'Active' },
-                { name: 'Prusa i3 MK3S+', type: '3D Printer', status: 'Active' },
-                { name: 'Creality Ender 3 V2', type: '3D Printer', status: 'Active' },
-                { name: 'Formlabs Form 3', type: '3D Printer (SLA)', status: 'Active' },
-                { name: 'Tormach PCNC 440', type: 'CNC Machine', status: 'Active' },
-                { name: 'ShopBot Desktop', type: 'CNC Router', status: 'Active' },
-                { name: 'HAAS Mini Mill', type: 'CNC Milling', status: 'Active' },
-                { name: 'Epilog Fusion Pro', type: 'Laser Cutter', status: 'Active' },
-                { name: 'Glowforge Pro', type: 'Laser Cutter', status: 'Active' },
-                { name: 'Arburg Allrounder', type: 'Injection Molder', status: 'Active' },
-                { name: 'Boy Machines 15A', type: 'Injection Molder', status: 'Active' },
-                { name: 'Thermwood M40', type: 'CNC Router', status: 'Active' },
+                { name: 'Bambu Lab X1 Carbon', type: '3D Printer', status: 'Running', job: 'Acme Corp - Bracket', usage: '60%' },
+                { name: 'Tormach PCNC 440', type: 'CNC Machine', status: 'Running', job: 'TechStart - Housing', usage: '45%' },
+                { name: 'Prusa i3 MK3S+', type: '3D Printer', status: 'Idle', job: null, usage: '0%' },
+                { name: 'Formlabs Form 3', type: '3D Printer (SLA)', status: 'Idle', job: null, usage: '0%' },
+                { name: 'Creality Ender 3 V2', type: '3D Printer', status: 'Idle', job: null, usage: '0%' },
+                { name: 'ShopBot Desktop', type: 'CNC Router', status: 'Idle', job: null, usage: '0%' },
+                { name: 'HAAS Mini Mill', type: 'CNC Milling', status: 'Idle', job: null, usage: '0%' },
+                { name: 'Epilog Fusion Pro', type: 'Laser Cutter', status: 'Idle', job: null, usage: '0%' },
+                { name: 'Glowforge Pro', type: 'Laser Cutter', status: 'Idle', job: null, usage: '0%' },
+                { name: 'Arburg Allrounder', type: 'Injection Molder', status: 'Idle', job: null, usage: '0%' },
+                { name: 'Boy Machines 15A', type: 'Injection Molder', status: 'Idle', job: null, usage: '0%' },
+                { name: 'Thermwood M40', type: 'CNC Router', status: 'Idle', job: null, usage: '0%' },
               ].map((device, index) => (
                 <div key={index} className="bg-[#0a1929] p-6 border border-[#1a2332]">
                   <div className="flex items-start justify-between mb-3">
@@ -413,10 +504,24 @@ export default function MakerDashboard() {
                       <h3 className="text-lg font-semibold text-white mb-1">{device.name}</h3>
                       <span className="text-[#9ca3af] text-sm">{device.type}</span>
                     </div>
-                    <span className="text-[#9ca3af] text-xs bg-[#1a2332] px-2 py-1 border border-[#253242]">
+                    <span className={`text-xs px-2 py-1 border ${
+                      device.status === 'Running' 
+                        ? 'text-green-200 bg-green-900 border-green-700'
+                        : 'text-[#9ca3af] bg-[#1a2332] border-[#253242]'
+                    }`}>
                       {device.status}
                     </span>
                   </div>
+                  {device.status === 'Running' && device.job && (
+                    <div className="mb-3 text-sm">
+                      <span className="text-[#9ca3af]">Current Job: </span>
+                      <span className="text-white">{device.job}</span>
+                      <div className="mt-2">
+                        <span className="text-[#9ca3af]">Usage: </span>
+                        <span className="text-white">{device.usage}</span>
+                      </div>
+                    </div>
+                  )}
                   <div className="pt-4 border-t border-[#1a2332]">
                     <button className="w-full bg-[#1a2332] hover:bg-[#253242] text-white px-4 py-2 border border-[#253242] hover:border-[#3a4552] transition-colors text-sm font-medium">
                       View Details
@@ -458,6 +563,8 @@ export default function MakerDashboard() {
 }
 
 function ServiceCard({ service }: { service: Service }) {
+  const [showDescription, setShowDescription] = useState(false);
+  
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -479,8 +586,11 @@ function ServiceCard({ service }: { service: Service }) {
     return 'See more';
   };
 
+  const href = service.type === 'ongoing' ? `/maker/jobs/active/${service.id}` : `/maker/jobs/${service.id}`;
+  
   return (
-    <div className="flex-shrink-0 w-80 bg-[#0a1929] border border-[#1a2332] overflow-hidden">
+    <>
+    <div className="flex-shrink-0 w-80 bg-[#0a1929] border border-[#1a2332] hover:border-[#3a4552] overflow-hidden transition-colors relative">
       {/* Type Label */}
       <div className="bg-[#1a2332] px-4 py-2 border-b border-[#253242]">
         <span className="text-[#9ca3af] text-xs font-medium uppercase tracking-wide">
@@ -528,6 +638,24 @@ function ServiceCard({ service }: { service: Service }) {
         </div>
 
         <div className="space-y-2">
+          {service.expectedTime && (
+            <div className="flex items-center justify-between">
+              <span className="text-[#9ca3af] text-sm">Expected Time:</span>
+              <span className="text-white text-sm font-medium">{service.expectedTime}</span>
+            </div>
+          )}
+          {service.materials && (
+            <div className="flex items-center justify-between">
+              <span className="text-[#9ca3af] text-sm">Material:</span>
+              <span className="text-white text-sm font-medium">{service.materials}</span>
+            </div>
+          )}
+          {service.machine && (
+            <div className="flex items-center justify-between">
+              <span className="text-[#9ca3af] text-sm">Machine:</span>
+              <span className="text-white text-sm font-medium">{service.machine}</span>
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <span className="text-[#9ca3af] text-sm">Deadline:</span>
             <span className="text-white text-sm font-medium">
@@ -543,18 +671,57 @@ function ServiceCard({ service }: { service: Service }) {
           </div>
         </div>
 
-        {/* See More Button */}
-        <button className="w-full mt-4 bg-[#1a2332] hover:bg-[#253242] text-white px-4 py-2 border border-[#253242] hover:border-[#3a4552] transition-colors text-sm font-medium">
-          {getSeeMoreText()}
-        </button>
+        {/* Extended Description Button */}
+        {service.extendedDescription && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowDescription(true);
+            }}
+            className="w-full mt-3 bg-[#253242] hover:bg-[#3a4552] text-white px-4 py-2 border border-[#3a4552] hover:border-[#4a5562] transition-colors text-sm"
+          >
+            Extended Description
+          </button>
+        )}
+
+        {/* See More Button - Wrap in Link */}
+        <Link href={href} className="block w-full mt-4 bg-[#1a2332] hover:bg-[#253242] text-white px-4 py-2 border border-[#253242] hover:border-[#3a4552] transition-colors text-sm font-medium text-center">
+          {service.type === 'ongoing' ? 'View Details' : getSeeMoreText()}
+        </Link>
       </div>
+      
+      {/* Extended Description Modal */}
+      {showDescription && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowDescription(false)}
+        >
+          <div 
+            className="bg-[#0a1929] border border-[#1a2332] max-w-2xl w-full p-6 max-h-[80vh] overflow-y-auto"
+            onClick={(e) => { e.stopPropagation(); }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-white heading-font">Extended Description</h3>
+              <button
+                onClick={() => setShowDescription(false)}
+                className="text-[#9ca3af] hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-white leading-relaxed">{service.extendedDescription}</p>
+          </div>
+        </div>
+      )}
     </div>
+    </>
   );
 }
 
 function QuickServiceCard({ service }: { service: QuickService }) {
   return (
-    <div className="flex-shrink-0 w-80 bg-[#0a1929] border border-[#1a2332] overflow-hidden">
+    <Link href={`/maker/jobs/${service.id}`} className="flex-shrink-0 w-80 bg-[#0a1929] border border-[#1a2332] hover:border-[#3a4552] overflow-hidden transition-colors block">
       {/* Type Label */}
       <div className="bg-[#1a2332] px-4 py-2 border-b border-[#253242]">
         <span className="text-[#9ca3af] text-xs font-medium uppercase tracking-wide">
@@ -625,10 +792,10 @@ function QuickServiceCard({ service }: { service: QuickService }) {
         </div>
 
         {/* See More Button */}
-        <button className="w-full mt-4 bg-[#1a2332] hover:bg-[#253242] text-white px-4 py-2 border border-[#253242] hover:border-[#3a4552] transition-colors text-sm font-medium">
-          See more quick services
-        </button>
+        <div className="w-full mt-4 bg-[#1a2332] hover:bg-[#253242] text-white px-4 py-2 border border-[#253242] hover:border-[#3a4552] transition-colors text-sm font-medium text-center">
+          See Details & Accept
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }
