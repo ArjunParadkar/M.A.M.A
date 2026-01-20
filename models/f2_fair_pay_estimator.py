@@ -15,25 +15,19 @@ import os
 @dataclass
 class PayEstimateInput:
     """Input features for pay estimation"""
-    # Job specs
+    # Job specs (required fields first)
     material: str  # e.g., 'PLA', 'ABS', 'Metal', 'Wood'
     material_cost_per_unit: float  # cost in USD
     quantity: int
     tolerance_tier: str  # 'low', 'medium', 'high'
     complexity_score: float  # 0-1, estimated from STL analysis or user input
-    
-    # Time estimates
     estimated_hours: float  # estimated manufacturing time
-    setup_time_hours: float = 1.0
-    
-    # Urgency
     deadline_days: int
+    
+    # Optional fields with defaults (must come after required fields)
+    setup_time_hours: float = 1.0
     standard_delivery_days: int = 14  # typical delivery time
-    
-    # Location factors
     shipping_distance_miles: float = 0.0
-    
-    # Market factors (optional, can be estimated)
     market_rate_per_hour: float = 35.0  # average manufacturing labor rate
 
 

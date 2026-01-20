@@ -188,6 +188,18 @@ ALTER TABLE pay_estimates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE qc_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE disputes ENABLE ROW LEVEL SECURITY;
 
+-- Helper function to check if user is admin (bypasses RLS to avoid recursion)
+CREATE OR REPLACE FUNCTION public.is_admin(user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1
+    FROM public.profiles
+    WHERE id = user_id AND role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
 -- Drop existing policies to avoid duplicates, then create
 DROP POLICY IF EXISTS "Users can view their own profile" ON profiles;
 DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
@@ -195,7 +207,7 @@ DROP POLICY IF EXISTS "Users can insert their own profile" ON profiles;
 DROP POLICY IF EXISTS "Admins can view all profiles" ON profiles;
 CREATE POLICY "Users can view their own profile" ON profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can update their own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Admins can view all profiles" ON profiles FOR SELECT USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin'));
+CREATE POLICY "Admins can view all profiles" ON profiles FOR SELECT USING (public.is_admin(auth.uid()));
 
 DROP POLICY IF EXISTS "Manufacturers can view their own data" ON manufacturers;
 DROP POLICY IF EXISTS "Manufacturers can update their own data" ON manufacturers;
@@ -219,9 +231,13 @@ CREATE POLICY "Manufacturers can delete their own devices" ON manufacturer_devic
 DROP POLICY IF EXISTS "Clients can view their own jobs" ON jobs;
 DROP POLICY IF EXISTS "Clients can create their own jobs" ON jobs;
 DROP POLICY IF EXISTS "Clients can update their own jobs" ON jobs;
+DROP POLICY IF EXISTS "Manufacturers can view assigned jobs" ON jobs;
+DROP POLICY IF EXISTS "Manufacturers can update assigned jobs" ON jobs;
 CREATE POLICY "Clients can view their own jobs" ON jobs FOR SELECT USING (client_id = auth.uid());
 CREATE POLICY "Clients can create their own jobs" ON jobs FOR INSERT WITH CHECK (client_id = auth.uid());
 CREATE POLICY "Clients can update their own jobs" ON jobs FOR UPDATE USING (client_id = auth.uid());
+CREATE POLICY "Manufacturers can view assigned jobs" ON jobs FOR SELECT USING (selected_manufacturer_id = auth.uid());
+CREATE POLICY "Manufacturers can update assigned jobs" ON jobs FOR UPDATE USING (selected_manufacturer_id = auth.uid());
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
@@ -231,4 +247,231 @@ CREATE INDEX IF NOT EXISTS idx_manufacturer_devices_manufacturer_id ON manufactu
 -- Manufacturers.id = profiles.id, so we need a profile first. The form does: 1) update profiles, 2) upsert manufacturers.
 -- For upsert, if no row exists, INSERT runs. We need INSERT policy (done above).
 -- For manufacturers, location_state and location_zip are NOT NULL. In our form we always send state and zip. Good.
+
+-- =============================================================================
+-- 11. Messaging + Shipping + Financials (004)
+-- =============================================================================
+
+-- 11.1 Extend jobs with fields needed to connect client↔manufacturer and preserve order details
+ALTER TABLE public.jobs ADD COLUMN IF NOT EXISTS order_type TEXT;
+ALTER TABLE public.jobs ADD COLUMN IF NOT EXISTS tolerance_thou FLOAT;
+ALTER TABLE public.jobs ADD COLUMN IF NOT EXISTS manufacturing_types TEXT[] NOT NULL DEFAULT '{}';
+ALTER TABLE public.jobs ADD COLUMN IF NOT EXISTS finish_details TEXT;
+ALTER TABLE public.jobs ADD COLUMN IF NOT EXISTS coatings TEXT[] NOT NULL DEFAULT '{}';
+ALTER TABLE public.jobs ADD COLUMN IF NOT EXISTS screw_dimensions TEXT;
+ALTER TABLE public.jobs ADD COLUMN IF NOT EXISTS paint_color TEXT;
+ALTER TABLE public.jobs ADD COLUMN IF NOT EXISTS stl_url TEXT;
+ALTER TABLE public.jobs ADD COLUMN IF NOT EXISTS assigned_quantity INTEGER;
+
+-- 11.2 Job messages (client ↔ manufacturer)
+CREATE TABLE IF NOT EXISTS public.job_messages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  job_id UUID NOT NULL REFERENCES public.jobs(id) ON DELETE CASCADE,
+  sender_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  recipient_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  body TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_job_messages_job_id_created_at ON public.job_messages(job_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_job_messages_sender_id ON public.job_messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_job_messages_recipient_id ON public.job_messages(recipient_id);
+
+ALTER TABLE public.job_messages ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Participants can read job messages" ON public.job_messages;
+CREATE POLICY "Participants can read job messages"
+ON public.job_messages
+FOR SELECT
+USING (
+  auth.uid() = sender_id OR auth.uid() = recipient_id
+);
+
+DROP POLICY IF EXISTS "Participants can send job messages" ON public.job_messages;
+CREATE POLICY "Participants can send job messages"
+ON public.job_messages
+FOR INSERT
+WITH CHECK (
+  auth.uid() = sender_id
+  AND EXISTS (
+    SELECT 1
+    FROM public.jobs j
+    WHERE j.id = job_messages.job_id
+      AND (
+        (j.client_id = job_messages.sender_id AND j.selected_manufacturer_id = job_messages.recipient_id)
+        OR
+        (j.client_id = job_messages.recipient_id AND j.selected_manufacturer_id = job_messages.sender_id)
+      )
+  )
+);
+
+-- 11.3 Shipping records (manufacturer submits tracking)
+CREATE TABLE IF NOT EXISTS public.shipping_records (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  job_id UUID NOT NULL UNIQUE REFERENCES public.jobs(id) ON DELETE CASCADE,
+  manufacturer_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  carrier TEXT NOT NULL,
+  tracking_number TEXT NOT NULL,
+  shipped_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  delivered_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.shipping_records ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Participants can read shipping" ON public.shipping_records;
+CREATE POLICY "Participants can read shipping"
+ON public.shipping_records
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1
+    FROM public.jobs j
+    WHERE j.id = shipping_records.job_id
+      AND (j.client_id = auth.uid() OR j.selected_manufacturer_id = auth.uid())
+  )
+);
+
+DROP POLICY IF EXISTS "Manufacturer can create shipping" ON public.shipping_records;
+CREATE POLICY "Manufacturer can create shipping"
+ON public.shipping_records
+FOR INSERT
+WITH CHECK (
+  auth.uid() = manufacturer_id
+  AND EXISTS (
+    SELECT 1
+    FROM public.jobs j
+    WHERE j.id = shipping_records.job_id
+      AND j.selected_manufacturer_id = auth.uid()
+  )
+);
+
+-- 11.4 Financial transactions (demo ledger)
+DO $$ BEGIN
+  CREATE TYPE public.transaction_status AS ENUM ('pending', 'authorized', 'paid', 'failed', 'refunded');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS public.financial_transactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  job_id UUID REFERENCES public.jobs(id) ON DELETE SET NULL,
+  client_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  manufacturer_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  amount_cents INTEGER NOT NULL CHECK (amount_cents >= 0),
+  currency TEXT NOT NULL DEFAULT 'USD',
+  status public.transaction_status NOT NULL DEFAULT 'pending',
+  kind TEXT NOT NULL DEFAULT 'job_payment',
+  description TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_financial_transactions_client_id_created_at ON public.financial_transactions(client_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_financial_transactions_manufacturer_id_created_at ON public.financial_transactions(manufacturer_id, created_at);
+
+ALTER TABLE public.financial_transactions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Participants can read financials" ON public.financial_transactions;
+CREATE POLICY "Participants can read financials"
+ON public.financial_transactions
+FOR SELECT
+USING (
+  auth.uid() = client_id OR auth.uid() = manufacturer_id
+);
+
+DROP POLICY IF EXISTS "Client can create pending financials" ON public.financial_transactions;
+CREATE POLICY "Client can create pending financials"
+ON public.financial_transactions
+FOR INSERT
+WITH CHECK (
+  auth.uid() = client_id
+  AND status = 'pending'
+);
+
+DROP TRIGGER IF EXISTS update_financial_transactions_updated_at ON public.financial_transactions;
+CREATE TRIGGER update_financial_transactions_updated_at
+BEFORE UPDATE ON public.financial_transactions
+FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+-- =============================================================================
+-- 12. Job Assignments for Multi-Manufacturer Open Requests (005)
+-- =============================================================================
+
+-- For large open requests, multiple manufacturers can each accept a portion.
+-- This table tracks each manufacturer's assignment (quantity, delivery date, status).
+
+CREATE TABLE IF NOT EXISTS public.job_assignments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  job_id UUID NOT NULL REFERENCES public.jobs(id) ON DELETE CASCADE,
+  manufacturer_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  assigned_quantity INTEGER NOT NULL CHECK (assigned_quantity > 0),
+  estimated_delivery_date TIMESTAMPTZ NOT NULL,
+  status TEXT NOT NULL DEFAULT 'accepted' CHECK (status IN ('accepted', 'in_production', 'qc_pending', 'shipped', 'delivered', 'cancelled')),
+  completed_quantity INTEGER NOT NULL DEFAULT 0 CHECK (completed_quantity >= 0),
+  pay_amount_cents INTEGER NOT NULL CHECK (pay_amount_cents >= 0),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(job_id, manufacturer_id) -- One assignment per manufacturer per job
+);
+
+CREATE INDEX IF NOT EXISTS idx_job_assignments_job_id ON public.job_assignments(job_id);
+CREATE INDEX IF NOT EXISTS idx_job_assignments_manufacturer_id ON public.job_assignments(manufacturer_id);
+CREATE INDEX IF NOT EXISTS idx_job_assignments_status ON public.job_assignments(status);
+
+ALTER TABLE public.job_assignments ENABLE ROW LEVEL SECURITY;
+
+-- Clients can view assignments for their jobs
+DROP POLICY IF EXISTS "Clients can view their job assignments" ON public.job_assignments;
+CREATE POLICY "Clients can view their job assignments"
+ON public.job_assignments
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1
+    FROM public.jobs j
+    WHERE j.id = job_assignments.job_id
+      AND j.client_id = auth.uid()
+  )
+);
+
+-- Manufacturers can view their own assignments
+DROP POLICY IF EXISTS "Manufacturers can view their assignments" ON public.job_assignments;
+CREATE POLICY "Manufacturers can view their assignments"
+ON public.job_assignments
+FOR SELECT
+USING (auth.uid() = manufacturer_id);
+
+-- Manufacturers can create assignments when accepting open requests
+DROP POLICY IF EXISTS "Manufacturers can create assignments" ON public.job_assignments;
+CREATE POLICY "Manufacturers can create assignments"
+ON public.job_assignments
+FOR INSERT
+WITH CHECK (
+  auth.uid() = manufacturer_id
+  AND EXISTS (
+    SELECT 1
+    FROM public.jobs j
+    WHERE j.id = job_assignments.job_id
+      AND j.order_type = 'open-request'
+      AND j.status IN ('posted', 'assigned')
+      -- Check that total assigned doesn't exceed job quantity
+      AND (
+        SELECT COALESCE(SUM(ja.assigned_quantity), 0)
+        FROM public.job_assignments ja
+        WHERE ja.job_id = j.id
+      ) + job_assignments.assigned_quantity <= j.quantity
+  )
+);
+
+-- Manufacturers can update their own assignments (progress, status)
+DROP POLICY IF EXISTS "Manufacturers can update their assignments" ON public.job_assignments;
+CREATE POLICY "Manufacturers can update their assignments"
+ON public.job_assignments
+FOR UPDATE
+USING (auth.uid() = manufacturer_id);
+
+-- Trigger to update updated_at
+DROP TRIGGER IF EXISTS update_job_assignments_updated_at ON public.job_assignments;
+CREATE TRIGGER update_job_assignments_updated_at
+BEFORE UPDATE ON public.job_assignments
+FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 

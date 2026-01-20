@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { uploadSTLFile } from '@/lib/supabase/storage';
 import STLViewer from '@/components/STLViewer';
 
 type OrderType = 'open-request' | 'quick-service' | 'closed-request' | 'closed-commission';
@@ -63,36 +64,32 @@ export default function NewOrderPage() {
     setUploadProgress(0);
 
     try {
+      // Get current user ID
       const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
       
-      // Simulate upload progress (replace with actual Supabase Storage upload)
-      const simulateProgress = () => {
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += 10;
-          setUploadProgress(progress);
-          if (progress >= 100) {
-            clearInterval(interval);
-            // After upload, proceed to AI processing
-            setTimeout(() => {
-              handleAIProcessing();
-            }, 500);
-          }
-        }, 200);
-      };
+      if (!user) {
+        throw new Error('You must be logged in to upload files');
+      }
 
-      simulateProgress();
+      // Upload STL file to Supabase Storage
+      setUploadProgress(25);
+      const stlFileUrl = await uploadSTLFile(stlFile, user.id);
+      setUploadProgress(75);
 
-      // TODO: Actually upload to Supabase Storage
-      // const fileExt = stlFile.name.split('.').pop();
-      // const fileName = `${Math.random()}.${fileExt}`;
-      // const filePath = `stl-files/${fileName}`;
-      // 
-      // const { error: uploadError } = await supabase.storage
-      //   .from('stl-files')
-      //   .upload(filePath, stlFile);
-      //
-      // if (uploadError) throw uploadError;
+      // Save STL file URL to sessionStorage for processing page
+      const currentData = sessionStorage.getItem('orderFormData');
+      const formData = currentData ? JSON.parse(currentData) : {};
+      formData.stlFileUrl = stlFileUrl;
+      formData.stlFileName = stlFile.name;
+      sessionStorage.setItem('orderFormData', JSON.stringify(formData));
+
+      setUploadProgress(100);
+      
+      // After upload, proceed to AI processing
+      setTimeout(() => {
+        handleAIProcessing();
+      }, 500);
 
     } catch (err: any) {
       setError(err.message || 'Failed to upload file');

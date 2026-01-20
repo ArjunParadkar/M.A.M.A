@@ -1,5 +1,7 @@
 # M.A.M.A - Make America Make Again
 
+> **🚀 Quick Start:** See [HOW_TO_RUN.md](./HOW_TO_RUN.md) for step-by-step instructions to get everything running.
+
 A distributed manufacturing marketplace connecting clients with skilled makers through AI-powered matching, fair pricing, and quality assurance.
 
 ## Tech Stack

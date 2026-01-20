@@ -66,7 +66,7 @@ export default function ClientProfileForm({ user }: { user: any }) {
 
       if (profileError) throw profileError;
 
-      router.push('/');
+      router.push('/client/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to complete profile');
       setLoading(false);

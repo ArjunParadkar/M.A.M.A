@@ -39,9 +39,13 @@ export default function CompleteProfilePage() {
           .eq('id', currentUser.id)
           .single();
 
-        if (profile && profile.role && profile.role !== 'client') {
-          // Profile exists, redirect to dashboard
-          router.push('/maker/dashboard');
+        if (profile && profile.role) {
+          // Profile exists, redirect to appropriate dashboard
+          if (profile.role === 'manufacturer') {
+            router.push('/maker/dashboard');
+          } else if (profile.role === 'client') {
+            router.push('/client/dashboard');
+          }
           return;
         }
       } catch (err) {
