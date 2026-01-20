@@ -1,6 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { DEMO_MODE, getRevaNotifications, acceptJobForReva, type DemoJob } from '@/lib/demoData';
 
 interface NewRequest {
   id: string;
@@ -12,28 +15,91 @@ interface NewRequest {
   toleranceTier: string;
 }
 
-const newRequests: NewRequest[] = [
-  {
-    id: '5',
-    clientName: 'TechFlow Inc',
-    deadline: '2026-02-03',
-    attempts: 0,
-    material: 'PLA',
-    quantity: 25,
-    toleranceTier: 'medium',
-  },
-  {
-    id: '6',
-    clientName: 'Manufacturing Pro',
-    deadline: '2026-02-06',
-    attempts: 0,
-    material: 'ABS',
-    quantity: 10,
-    toleranceTier: 'high',
-  },
-];
-
 export default function NewRequestsPage() {
+  const router = useRouter();
+  const [demoJobs, setDemoJobs] = useState<DemoJob[]>([]);
+
+  useEffect(() => {
+    if (DEMO_MODE) {
+      const notifications = getRevaNotifications();
+      setDemoJobs(notifications);
+    }
+  }, []);
+
+  // Listen for storage changes
+  useEffect(() => {
+    if (!DEMO_MODE) return;
+    
+    const handleStorageChange = () => {
+      const notifications = getRevaNotifications();
+      setDemoJobs(notifications);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    const interval = setInterval(handleStorageChange, 1000);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const handleAccept = (jobId: string) => {
+    if (DEMO_MODE) {
+      const job = demoJobs.find(j => j.id === jobId);
+      if (!job) return;
+      
+      if (job?.order_type === 'open-request') {
+        // Calculate available quantity
+        const totalAssigned = job.assigned_manufacturers?.reduce((sum, m) => sum + (m.assigned_quantity || 0), 0) || 0;
+        const available = job.quantity - totalAssigned;
+        
+        // Calculate feasibility - estimate time per part
+        const deadlineDate = new Date(job.deadline);
+        const now = new Date();
+        const daysUntilDeadline = Math.ceil((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        const hoursUntilDeadline = daysUntilDeadline * 24;
+        
+        // Estimate hours per part (conservative: 2-4 hours per part depending on complexity)
+        const hoursPerPart = 3; // Average estimate
+        const maxFeasibleParts = Math.floor((hoursUntilDeadline / hoursPerPart) * 0.8); // 80% capacity to be safe
+        
+        // For open requests, prompt for quantity with feasibility check
+        const quantityInput = prompt(
+          `How many units can you accept?\n` +
+          `Available: ${available}\n` +
+          `Deadline: ${daysUntilDeadline} days (${hoursUntilDeadline} hours)\n` +
+          `Estimated time per part: ~${hoursPerPart} hours\n` +
+          `Recommended max: ${Math.min(available, maxFeasibleParts)} parts (to meet deadline)\n` +
+          `Enter quantity (Max: ${available}):`
+        );
+        
+        if (quantityInput) {
+          const quantity = parseInt(quantityInput);
+          if (quantity > 0 && quantity <= available) {
+            // Warn if quantity seems infeasible
+            if (quantity > maxFeasibleParts) {
+              const confirm = window.confirm(
+                `Warning: ${quantity} parts in ${daysUntilDeadline} days might be challenging.\n` +
+                `Estimated time needed: ${quantity * hoursPerPart} hours\n` +
+                `Available time: ~${hoursUntilDeadline} hours\n` +
+                `Do you still want to accept?`
+              );
+              if (!confirm) return;
+            }
+            acceptJobForReva(jobId, quantity);
+            router.push('/maker/dashboard');
+          } else {
+            alert(`Invalid quantity. Please enter a number between 1 and ${available}.`);
+          }
+        }
+      } else {
+        // For closed requests/commissions, accept full quantity
+        acceptJobForReva(jobId);
+        router.push('/maker/dashboard');
+      }
+    }
+  };
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -69,13 +135,20 @@ export default function NewRequestsPage() {
         <div className="max-w-7xl mx-auto">
           <div className="mb-6">
             <p className="text-gray-600 text-lg">
-              {newRequests.length} new request{newRequests.length !== 1 ? 's' : ''} available
+              {DEMO_MODE ? demoJobs.length : 0} new request{(DEMO_MODE ? demoJobs.length : 0) !== 1 ? 's' : ''} available
             </p>
           </div>
 
+          {DEMO_MODE && demoJobs.length === 0 && (
+            <div className="bg-[#0a1929] border border-[#1a2332] p-8 text-center text-white">
+              <p>No new requests at this time.</p>
+              <p className="text-sm text-[#9ca3af] mt-2">Create orders as Arham (client) to see them appear here.</p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {newRequests.map((request) => (
-              <div key={request.id} className="bg-[#0a1929] border border-[#1a2332] overflow-hidden">
+            {(DEMO_MODE ? demoJobs : []).map((job) => (
+              <div key={job.id} className="bg-[#0a1929] border border-[#1a2332] overflow-hidden">
                 {/* STL Preview - Mesh of Dots */}
                 <div className="relative h-48 bg-black overflow-hidden flex items-center justify-center">
                   <div className="relative w-40 h-40 stl-mesh-container">
@@ -111,38 +184,50 @@ export default function NewRequestsPage() {
                 <div className="p-6 space-y-4">
                   <div>
                     <h3 className="text-xl font-semibold text-white mb-1 heading-font">
-                      {request.clientName}
+                      {job.title || 'Manufacturing Job'}
                     </h3>
+                    <p className="text-[#9ca3af] text-sm">Client: {job.client_name}</p>
+                    <p className="text-[#9ca3af] text-xs mt-1">Type: {job.order_type.replace('-', ' ')}</p>
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-[#9ca3af] text-sm">Material:</span>
-                      <span className="text-white text-sm font-medium">{request.material}</span>
+                      <span className="text-white text-sm font-medium">{job.material}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-[#9ca3af] text-sm">Quantity:</span>
-                      <span className="text-white text-sm font-medium">{request.quantity}</span>
+                      <span className="text-white text-sm font-medium">{job.quantity} {job.order_type === 'open-request' && job.assigned_quantity ? `(${job.assigned_quantity} assigned)` : ''}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-[#9ca3af] text-sm">Tolerance:</span>
-                      <span className="text-white text-sm font-medium capitalize">{request.toleranceTier}</span>
+                      <span className="text-white text-sm font-medium">{job.tolerance || 'Standard'}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#9ca3af] text-sm">Pay:</span>
+                      <span className="text-white text-sm font-medium">${job.suggested_pay.toFixed(2)}</span>
                     </div>
                     <div className="flex items-center justify-between pt-2 border-t border-[#1a2332]">
                       <span className="text-[#9ca3af] text-sm">Deadline:</span>
                       <span className="text-white text-sm font-medium">
-                        {formatDate(request.deadline)}
+                        {formatDate(job.deadline)}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex gap-3 pt-4">
-                    <button className="flex-1 bg-[#1a2332] hover:bg-[#253242] text-white px-4 py-3 border border-[#253242] hover:border-[#3a4552] transition-colors font-medium">
+                    <button 
+                      onClick={() => handleAccept(job.id)}
+                      className="flex-1 bg-[#1a2332] hover:bg-[#253242] text-white px-4 py-3 border border-[#253242] hover:border-[#3a4552] transition-colors font-medium"
+                    >
                       Accept Request
                     </button>
-                    <button className="flex-1 bg-[#1a2332] hover:bg-[#253242] text-white px-4 py-3 border border-[#253242] hover:border-[#3a4552] transition-colors font-medium">
+                    <Link 
+                      href={`/maker/jobs/${job.id}`}
+                      className="flex-1 bg-[#1a2332] hover:bg-[#253242] text-white px-4 py-3 border border-[#253242] hover:border-[#3a4552] transition-colors font-medium text-center"
+                    >
                       View Details
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>

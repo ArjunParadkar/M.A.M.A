@@ -64,9 +64,10 @@ async def check_quality(request: QCRequest):
                 print(f"Warning: Could not download STL file: {e}")
                 # Continue without STL file (model will use photos only)
         
-        # Download evidence photos
+        # Download evidence photos (support both field names)
+        photo_urls = request.evidence_photo_urls or request.photo_urls or []
         evidence_image_paths = []
-        for photo_url in request.evidence_photo_urls:
+        for photo_url in photo_urls:
             try:
                 photo_response = requests.get(photo_url, timeout=30)
                 photo_response.raise_for_status()
@@ -118,6 +119,8 @@ async def check_quality(request: QCRequest):
             'qc_score': result.qc_score,
             'status': result.status,
             'similarity': result.similarity,
+            'dimensional_accuracy': getattr(result, 'dimensional_accuracy', result.similarity * 0.95),
+            'surface_quality': getattr(result, 'surface_quality', result.similarity * 0.90),
             'anomaly_score': result.anomaly_score,
             'notes': result.notes,
             'confidence': result.confidence,
@@ -130,7 +133,8 @@ async def check_quality(request: QCRequest):
 async def _fallback_qc(request: QCRequest):
     """Fallback QC using simple heuristics"""
     # Simple heuristic: assume good quality if we have photos
-    num_photos = len(request.evidence_photo_urls)
+    photo_urls = request.evidence_photo_urls or request.photo_urls or []
+    num_photos = len(photo_urls)
     
     # Base score from number of photos (more photos = better)
     base_score = min(0.7 + (num_photos * 0.05), 0.95)

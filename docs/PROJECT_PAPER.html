@@ -1,0 +1,1863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project M.A.M.A - Make America Make Again</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Trajan+Pro&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: letter;
+            margin: 1in;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #1a1a1a;
+            line-height: 1.6;
+            background: #f5f5f5;
+        }
+
+        .document-container {
+            background: white;
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        .document-page {
+            background: white;
+            width: 8.5in;
+            min-height: 11in;
+            padding: 1in;
+            margin-bottom: 30px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            position: relative;
+            page-break-after: always;
+        }
+
+        .page-header {
+            position: absolute;
+            top: 0.75in;
+            right: 1in;
+            font-size: 10pt;
+            color: #666;
+        }
+
+        /* Title Page */
+        .title-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .title-page-top {
+            text-align: center;
+        }
+
+        .logo-image-section {
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .logo-image {
+            max-width: 200px;
+            max-height: 200px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .logo-section {
+            margin-bottom: 40px;
+        }
+
+        .mama-logo {
+            font-family: 'Trajan Pro', 'Trajan', 'Times New Roman', serif;
+            font-size: 64pt;
+            font-weight: 400;
+            color: #0a1929;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+        }
+
+        .logo-dot {
+            color: #666;
+            margin: 0 4px;
+        }
+
+        .main-title {
+            font-family: 'Trajan Pro', 'Trajan', 'Times New Roman', serif;
+            font-size: 42pt;
+            font-weight: 400;
+            color: #0a1929;
+            margin: 20px 0;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-family: 'Trajan Pro', 'Trajan', 'Times New Roman', serif;
+            font-size: 28pt;
+            font-weight: 400;
+            color: #333;
+            margin: 10px 0 30px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .tagline {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 16pt;
+            color: #666;
+            margin: 30px 0;
+            font-weight: 300;
+        }
+
+        .video-section {
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .video-container {
+            width: 100%;
+            max-width: 560px;
+            margin: 20px auto;
+            background: #f8f8f8;
+            border: 2px solid #0a1929;
+            padding: 20px;
+            min-height: 315px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-placeholder-text {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12pt;
+            color: #666;
+            text-align: center;
+        }
+
+        .video-note {
+            font-size: 10pt;
+            color: #999;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        .title-page-footer {
+            margin-top: 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12pt;
+            color: #333;
+        }
+
+        .team-section, .track-section, .github-section {
+            margin: 15px 0;
+        }
+
+        .team-label, .track-label, .github-label {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .github-link {
+            color: #0a1929;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .github-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Table of Contents */
+        .toc-page {
+            padding-top: 1.5in;
+        }
+
+        .section-title {
+            font-family: 'Trajan Pro', 'Trajan', 'Times New Roman', serif;
+            font-size: 28pt;
+            font-weight: 400;
+            color: #0a1929;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #0a1929;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .toc-content {
+            margin-top: 40px;
+        }
+
+        .toc-item {
+            display: flex;
+            align-items: baseline;
+            margin: 15px 0;
+            font-size: 14pt;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .toc-title {
+            flex: 1;
+            color: #333;
+        }
+
+        .toc-dots {
+            flex: 1;
+            border-bottom: 1px dotted #999;
+            margin: 0 10px;
+        }
+
+        .toc-page-num {
+            color: #666;
+            font-weight: 600;
+        }
+
+        /* Content Pages */
+        .content-page {
+            padding-top: 1.5in;
+        }
+
+        .lead-paragraph {
+            font-size: 12pt;
+            font-weight: 500;
+            margin-bottom: 30px;
+            color: #1a1a1a;
+        }
+
+        .content-body {
+            font-size: 11pt;
+            line-height: 1.7;
+        }
+
+        .subsection-title {
+            font-family: 'Trajan Pro', 'Trajan', 'Times New Roman', serif;
+            font-size: 16pt;
+            font-weight: 400;
+            color: #0a1929;
+            margin: 25px 0 15px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .placeholder-text {
+            color: #999;
+            font-style: italic;
+            margin: 10px 0;
+        }
+
+        /* Page 4: Market & National Need */
+        .statistics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-box {
+            background: #f8f8f8;
+            border: 2px solid #0a1929;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-family: 'Trajan Pro', 'Trajan', 'Times New Roman', serif;
+            font-size: 32pt;
+            color: #0a1929;
+            font-weight: 400;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 10pt;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .key-points {
+            margin: 30px 0;
+        }
+
+        .bullet-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .bullet-list li {
+            margin: 15px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .bullet-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #0a1929;
+            font-size: 18pt;
+        }
+
+        .opportunity-visual {
+            margin: 30px 0;
+        }
+
+        .chart-placeholder {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: 30px;
+            margin: 20px 0;
+        }
+
+        .chart-title {
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .chart-bars {
+            margin: 20px 0;
+        }
+
+        .chart-bar-container {
+            margin: 15px 0;
+        }
+
+        .chart-bar {
+            background: #0a1929;
+            height: 30px;
+            margin-bottom: 5px;
+        }
+
+        .chart-label {
+            font-size: 10pt;
+            color: #333;
+        }
+
+        .chart-note {
+            font-size: 9pt;
+            color: #666;
+            font-style: italic;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .footnotes {
+            margin-top: 30px;
+            font-size: 9pt;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+        }
+
+        .footnotes p {
+            margin: 5px 0;
+        }
+
+        /* Page 5: Users & Use Cases */
+        .users-section {
+            margin: 25px 0;
+        }
+
+        .user-type-section {
+            margin: 20px 0;
+        }
+
+        .user-list {
+            margin: 15px 0;
+        }
+
+        .user-item {
+            margin: 12px 0;
+            padding-left: 15px;
+            border-left: 3px solid #0a1929;
+        }
+
+        .use-cases-section {
+            margin: 30px 0;
+        }
+
+        .use-case-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .use-case-box {
+            background: #f8f8f8;
+            border: 1px solid #0a1929;
+            padding: 15px;
+        }
+
+        .use-case-title {
+            font-weight: 600;
+            color: #0a1929;
+            margin-bottom: 8px;
+            font-size: 12pt;
+        }
+
+        .use-case-desc {
+            font-size: 10pt;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .visual-diagram {
+            margin: 30px 0;
+        }
+
+        .flow-diagram {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin: 20px 0;
+            background: #f8f8f8;
+            padding: 20px;
+            border: 1px solid #ddd;
+        }
+
+        .flow-column {
+            flex: 1;
+            text-align: center;
+        }
+
+        .flow-header {
+            font-weight: 600;
+            color: #0a1929;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #0a1929;
+        }
+
+        .flow-item {
+            margin: 10px 0;
+            font-size: 10pt;
+            color: #333;
+            padding: 8px;
+            background: white;
+            border: 1px solid #ccc;
+        }
+
+        .flow-arrow {
+            font-size: 24pt;
+            color: #0a1929;
+            margin: 0 15px;
+            padding-top: 30px;
+        }
+
+        /* Page 6: Value Proposition */
+        .value-prop-section {
+            margin: 25px 0;
+        }
+
+        .benefit-list {
+            margin: 20px 0;
+        }
+
+        .benefit-item {
+            margin: 18px 0;
+            padding: 15px;
+            background: #f8f8f8;
+            border-left: 4px solid #0a1929;
+        }
+
+        .benefit-item strong {
+            color: #0a1929;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 12pt;
+        }
+
+        .benefit-item p {
+            margin: 0;
+            font-size: 10pt;
+            line-height: 1.6;
+        }
+
+        .precedent-paragraph {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f0f0f0;
+            border: 1px solid #0a1929;
+        }
+
+        .precedent-paragraph p {
+            margin: 12px 0;
+            font-size: 10pt;
+            line-height: 1.7;
+        }
+
+        /* Page 7: Product Workflow */
+        .workflow-pipeline {
+            margin: 25px 0;
+        }
+
+        .workflow-step {
+            display: flex;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f8f8;
+            border-left: 4px solid #0a1929;
+        }
+
+        .step-number {
+            font-family: 'Trajan Pro', 'Trajan', 'Times New Roman', serif;
+            font-size: 24pt;
+            color: #0a1929;
+            font-weight: 400;
+            margin-right: 20px;
+            min-width: 40px;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-content strong {
+            color: #0a1929;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 12pt;
+        }
+
+        .step-content p {
+            margin: 0;
+            font-size: 10pt;
+            line-height: 1.6;
+        }
+
+        .differentiator-box {
+            margin: 30px 0;
+            padding: 20px;
+            background: #0a1929;
+            color: white;
+        }
+
+        .differentiator-title {
+            font-family: 'Trajan Pro', 'Trajan', 'Times New Roman', serif;
+            font-size: 14pt;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .differentiator-box p {
+            margin: 0;
+            font-size: 10pt;
+            line-height: 1.7;
+        }
+
+        .workflow-visual {
+            margin: 30px 0;
+        }
+
+        .lifecycle-flow {
+            display: flex;
+            gap: 20px;
+            background: #f8f8f8;
+            padding: 20px;
+            border: 1px solid #ddd;
+        }
+
+        .lifecycle-lane {
+            flex: 1;
+        }
+
+        .lane-label {
+            font-weight: 600;
+            color: #0a1929;
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #0a1929;
+        }
+
+        .lane-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .lane-step {
+            padding: 10px;
+            background: white;
+            border: 1px solid #ccc;
+            text-align: center;
+            font-size: 9pt;
+        }
+
+        .lifecycle-connector {
+            width: 2px;
+            background: #0a1929;
+            margin: 30px 0;
+        }
+
+        /* Page 8: AI Systems */
+        .model-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .model-card {
+            background: #f8f8f8;
+            border: 2px solid #0a1929;
+            padding: 12px;
+            font-size: 9pt;
+        }
+
+        .model-header {
+            margin-bottom: 12px;
+        }
+
+        .model-name {
+            font-family: 'Trajan Pro', 'Trajan', 'Times New Roman', serif;
+            font-size: 13pt;
+            color: #0a1929;
+            font-weight: 400;
+        }
+
+        .model-content {
+            font-size: 8.5pt;
+        }
+
+        .model-section {
+            margin: 10px 0;
+        }
+
+        .model-section strong {
+            color: #0a1929;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 10pt;
+        }
+
+        .model-section ul {
+            margin: 5px 0;
+            padding-left: 18px;
+        }
+
+        .model-section li {
+            margin: 3px 0;
+            line-height: 1.4;
+        }
+
+        .additional-ai-section {
+            margin: 25px 0;
+        }
+
+        .ai-features-list {
+            margin: 18px 0;
+        }
+
+        .ai-feature-item {
+            margin: 12px 0;
+            padding: 10px;
+            background: #f8f8f8;
+            border-left: 3px solid #0a1929;
+            font-size: 9.5pt;
+        }
+
+        .ai-feature-item strong {
+            color: #0a1929;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 11pt;
+        }
+
+        .ai-feature-item p {
+            margin: 0;
+            font-size: 9pt;
+            line-height: 1.5;
+        }
+
+        /* Page 9: Architecture */
+        .architecture-page {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .architecture-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .figma-placeholder {
+            flex: 1;
+            background: #f8f8f8;
+            border: 2px dashed #0a1929;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            margin: 20px 0;
+        }
+
+        .placeholder-text-large {
+            font-family: 'Trajan Pro', 'Trajan', 'Times New Roman', serif;
+            font-size: 18pt;
+            color: #666;
+            text-align: center;
+        }
+
+        .placeholder-note {
+            font-size: 10pt;
+            color: #999;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .architecture-legend {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+        }
+
+        .legend-title {
+            font-family: 'Trajan Pro', 'Trajan', 'Times New Roman', serif;
+            font-size: 12pt;
+            color: #0a1929;
+            margin-bottom: 12px;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .legend-item {
+            font-size: 9pt;
+            line-height: 1.5;
+        }
+
+        /* Page 10: Video & References */
+        .video-section {
+            margin: 25px 0;
+        }
+
+        .video-placeholder {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            margin: 20px 0;
+        }
+
+        .qr-placeholder {
+            text-align: center;
+        }
+
+        .qr-code-placeholder {
+            width: 150px;
+            height: 150px;
+            background: #f8f8f8;
+            border: 2px solid #0a1929;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 10pt;
+            color: #666;
+        }
+
+        .qr-url {
+            font-size: 9pt;
+            color: #0a1929;
+            font-weight: 600;
+        }
+
+        .video-description {
+            flex: 1;
+        }
+
+        .demo-bullets {
+            list-style: none;
+            padding: 0;
+        }
+
+        .demo-bullets li {
+            margin: 12px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .demo-bullets li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #0a1929;
+            font-weight: bold;
+        }
+
+        .references-section {
+            margin-top: 40px;
+            border-top: 2px solid #0a1929;
+            padding-top: 20px;
+        }
+
+        .references-list {
+            font-size: 9pt;
+            line-height: 1.8;
+        }
+
+        .reference-item {
+            margin: 10px 0;
+            padding-left: 20px;
+            text-indent: -20px;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .document-container {
+                background: white;
+                box-shadow: none;
+            }
+            .document-page {
+                margin: 0;
+                box-shadow: none;
+                page-break-after: always;
+            }
+            @page {
+                size: letter;
+                margin: 1in;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="document-container">
+        <!-- Page 1: Title Page with Video -->
+        <div class="document-page title-page">
+            <div class="title-page-top">
+                <div class="logo-image-section">
+                    <img src="mama-logo.png" alt="M.A.M.A Logo" class="logo-image" />
+                </div>
+                <div class="logo-section">
+                    <div class="mama-logo">
+                        M<span class="logo-dot">•</span>A<span class="logo-dot">•</span>M<span class="logo-dot">•</span>A
+                    </div>
+                </div>
+                <h1 class="main-title">Project M.A.M.A</h1>
+                <h2 class="subtitle">Make America Make Again</h2>
+                <div class="tagline">AI-Powered Distributed Manufacturing Marketplace</div>
+                
+                <div class="video-section">
+                    <div class="video-container">
+                        <div class="video-placeholder-text">
+                            [Embed Video Demo Here]<br>
+                            <span class="video-note">Demo video showcasing client upload, AI analysis, manufacturer workflow, and quality control</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="title-page-footer">
+                <div class="team-section">
+                    <p class="team-label"><strong>Team:</strong></p>
+                    <p class="team-names">Arjun Paradkar, Reva Paradkar, Arham Shah</p>
+                </div>
+                <div class="track-section">
+                    <p class="track-label"><strong>School:</strong> Bentonville High School</p>
+                    <p class="track-label"><strong>Track:</strong> Track 2</p>
+                </div>
+                <div class="github-section">
+                    <p class="github-label"><strong>Repository:</strong> <a href="https://github.com/ArjunParadkar/M.A.M.A" target="_blank" class="github-link">github.com/ArjunParadkar/M.A.M.A</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 2: Table of Contents -->
+        <div class="document-page toc-page">
+            <div class="page-header">
+                <span class="page-number">2</span>
+            </div>
+            <h2 class="section-title">Table of Contents</h2>
+            <div class="toc-content">
+                <div class="toc-item">
+                    <span class="toc-title">Narrative</span>
+                    <span class="toc-dots"></span>
+                    <span class="toc-page-num">3</span>
+                </div>
+                <div class="toc-item">
+                    <span class="toc-title">Market & National Need</span>
+                    <span class="toc-dots"></span>
+                    <span class="toc-page-num">4</span>
+                </div>
+                <div class="toc-item">
+                    <span class="toc-title">Users & Use Cases</span>
+                    <span class="toc-dots"></span>
+                    <span class="toc-page-num">5</span>
+                </div>
+                <div class="toc-item">
+                    <span class="toc-title">Value Proposition (Client + Manufacturer)</span>
+                    <span class="toc-dots"></span>
+                    <span class="toc-page-num">6</span>
+                </div>
+                <div class="toc-item">
+                    <span class="toc-title">Product & Workflow (End-to-End)</span>
+                    <span class="toc-dots"></span>
+                    <span class="toc-page-num">7</span>
+                </div>
+                <div class="toc-item">
+                    <span class="toc-title">AI Systems (All 8 Features)</span>
+                    <span class="toc-dots"></span>
+                    <span class="toc-page-num">8</span>
+                </div>
+                <div class="toc-item">
+                    <span class="toc-title">System Architecture (Figma Overview)</span>
+                    <span class="toc-dots"></span>
+                    <span class="toc-page-num">9</span>
+                </div>
+                <div class="toc-item">
+                    <span class="toc-title">Video Demo & References</span>
+                    <span class="toc-dots"></span>
+                    <span class="toc-page-num">10</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 3: Narrative -->
+        <div class="document-page content-page">
+            <div class="page-header">
+                <span class="page-number">3</span>
+            </div>
+            <h2 class="section-title">Narrative</h2>
+            <div class="content-body">
+                <h3 class="subsection-title">The Problem</h3>
+                <p class="placeholder-text">[Your polished narrative will be placed here]</p>
+                
+                <h3 class="subsection-title">The Insight</h3>
+                <p class="placeholder-text">[Your polished narrative will be placed here]</p>
+                
+                <h3 class="subsection-title">The Solution: Project MAMA</h3>
+                <p class="placeholder-text">[Your polished narrative will be placed here]</p>
+                
+                <h3 class="subsection-title">Why Now</h3>
+                <p class="placeholder-text">[Your polished narrative will be placed here]</p>
+                
+                <h3 class="subsection-title">Why This Wins</h3>
+                <p class="placeholder-text">[Your polished narrative will be placed here]</p>
+            </div>
+        </div>
+
+        <!-- Page 4: Market & National Need -->
+        <div class="document-page content-page">
+            <div class="page-header">
+                <span class="page-number">4</span>
+            </div>
+            <h2 class="section-title">Market & National Need</h2>
+            <div class="content-body">
+                <p class="lead-paragraph">
+                    The United States faces a critical manufacturing deficit that represents both a national 
+                    challenge and an unprecedented opportunity for distributed domestic production through 
+                    additive manufacturing and digital fabrication.
+                </p>
+
+                <div class="statistics-grid">
+                    <div class="stat-box">
+                        <div class="stat-number">$30.1B</div>
+                        <div class="stat-label">3D Printing Market Size (2024)<sup>1</sup></div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">25.8%</div>
+                        <div class="stat-label">CAGR Growth Rate (2024-2030)<sup>1</sup></div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">$918.4B</div>
+                        <div class="stat-label">U.S. Trade Deficit (2024)<sup>2</sup></div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">2,400+</div>
+                        <div class="stat-label">Fab Labs & Makerspaces Nationwide<sup>3</sup></div>
+                    </div>
+                </div>
+
+                <div class="key-points">
+                    <h3 class="subsection-title">Key Observations</h3>
+                    <ul class="bullet-list">
+                        <li>
+                            <strong>Distributed manufacturing is scaling rapidly;</strong> the 3D printing and 
+                            digital fabrication market is projected to reach $83.9 billion by 2030, growing at 
+                            25.8% annually. This growth represents a massive opportunity to harness distributed 
+                            production capacity.
+                        </li>
+                        <li>
+                            <strong>The problem isn't "no capacity" — it's coordination, access, and trust</strong> 
+                            for distributed manufacturing networks. With 2,400+ Fab Labs and makerspaces across 
+                            the United States, plus hundreds of thousands of individuals with 3D printers, CNC 
+                            machines, and laser cutters, the production capacity exists but remains fragmented 
+                            and underutilized.
+                        </li>
+                        <li>
+                            <strong>Trade deficits create urgency;</strong> the $918.4 billion U.S. trade deficit 
+                            represents a massive opportunity to shift production back to domestic sources. Even a 
+                            1% shift from imported manufactured goods to distributed domestic production represents 
+                            over $9 billion in economic activity.
+                        </li>
+                        <li>
+                            <strong>On-demand manufacturing is the future;</strong> as additive manufacturing 
+                            costs decrease and quality improves, distributed production becomes economically viable 
+                            for small-batch and custom manufacturing at scale.
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="opportunity-visual">
+                    <h3 class="subsection-title">Opportunity Scale</h3>
+                    <div class="chart-placeholder">
+                        <div class="chart-title">Distributed Manufacturing Growth → Market Capture Potential</div>
+                        <div class="chart-bars">
+                            <div class="chart-bar-container">
+                                <div class="chart-bar" style="width: 15%"></div>
+                                <div class="chart-label">2024 Market: $30.1B</div>
+                            </div>
+                            <div class="chart-bar-container">
+                                <div class="chart-bar" style="width: 50%"></div>
+                                <div class="chart-label">2030 Projected: $83.9B</div>
+                            </div>
+                            <div class="chart-bar-container">
+                                <div class="chart-bar" style="width: 100%"></div>
+                                <div class="chart-label">Trade Deficit Shift Potential: $918.4B</div>
+                            </div>
+                        </div>
+                        <div class="chart-note">
+                            Annual market size growth vs. opportunity to shift trade deficit to domestic distributed production
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footnotes">
+                    <p><sup>1</sup> Grand View Research, "3D Printing Market Size, Share & Trends Analysis Report," 2024</p>
+                    <p><sup>2</sup> Bureau of Economic Analysis, U.S. International Trade in Goods and Services, Annual 2024</p>
+                    <p><sup>3</sup> Fab Foundation, "Global Fab Lab Network Statistics," 2024</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 5: Users & Use Cases -->
+        <div class="document-page content-page">
+            <div class="page-header">
+                <span class="page-number">5</span>
+            </div>
+            <h2 class="section-title">Users & Use Cases</h2>
+            <div class="content-body">
+                <p class="lead-paragraph">
+                    Project MAMA operates as a two-sided marketplace connecting clients seeking 
+                    manufacturing services with distributed manufacturers across the United States.
+                </p>
+
+                <div class="users-section">
+                    <div class="user-type-section">
+                        <h3 class="subsection-title">A) Client Users</h3>
+                        <div class="user-list">
+                            <div class="user-item">
+                                <strong>Individual Inventors</strong> — Seeking prototype production or 
+                                small-batch manufacturing for product development
+                            </div>
+                            <div class="user-item">
+                                <strong>Small Businesses</strong> — Requiring manufacturing capacity without 
+                                capital investment in equipment or long-term contracts
+                            </div>
+                            <div class="user-item">
+                                <strong>Corporations / Procurement Teams</strong> — Diversifying supply chains, 
+                                reducing lead times through parallel manufacturing, and accessing distributed 
+                                production networks
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="user-type-section">
+                        <h3 class="subsection-title">B) Manufacturer Users</h3>
+                        <div class="user-list">
+                            <div class="user-item">
+                                <strong>Individuals with Equipment</strong> — Makers with 3D printers, CNC machines, 
+                                or other manufacturing equipment seeking to monetize idle capacity
+                            </div>
+                            <div class="user-item">
+                                <strong>Small Shops</strong> — Local manufacturing facilities with specialized 
+                                equipment seeking access to broader client base
+                            </div>
+                            <div class="user-item">
+                                <strong>Contract Manufacturers</strong> — Established shops looking to optimize 
+                                utilization and access AI-powered matching and scheduling
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="use-cases-section">
+                    <h3 class="subsection-title">Use Cases: Job Types & Fulfillment Patterns</h3>
+                    <div class="use-case-grid">
+                        <div class="use-case-box">
+                            <div class="use-case-title">Open Request</div>
+                            <div class="use-case-desc">
+                                Large quantity orders (200+ units) split among multiple manufacturers. 
+                                System automatically distributes units based on capacity, quality, and 
+                                rank scores. Example: 2000-unit order distributed across 15-20 manufacturers.
+                            </div>
+                        </div>
+                        <div class="use-case-box">
+                            <div class="use-case-title">Quick Service</div>
+                            <div class="use-case-desc">
+                                Speed-optimized orders with auto-assignment to top-ranked manufacturers. 
+                                Trusted by clients for rapid turnaround. System matches and assigns within 
+                                minutes of posting.
+                            </div>
+                        </div>
+                        <div class="use-case-box">
+                            <div class="use-case-title">Closed Request</div>
+                            <div class="use-case-desc">
+                                Single manufacturer bid/accept workflow. Client reviews top matches, selects 
+                                preferred manufacturer. Traditional one-to-one manufacturing relationship.
+                            </div>
+                        </div>
+                        <div class="use-case-box">
+                            <div class="use-case-title">Closed Commission</div>
+                            <div class="use-case-desc">
+                                Recurring weekly production quotas. Long-term relationships with established 
+                                manufacturers for consistent product supply. Example: 8 units per week over 
+                                12-month period.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="visual-diagram">
+                    <h3 class="subsection-title">Client → Job Type → Fulfillment Pattern</h3>
+                    <div class="flow-diagram">
+                        <div class="flow-column client-column">
+                            <div class="flow-header">Client</div>
+                            <div class="flow-item">Individual Inventor</div>
+                            <div class="flow-item">Small Business</div>
+                            <div class="flow-item">Corporation</div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-column type-column">
+                            <div class="flow-header">Job Type</div>
+                            <div class="flow-item">Open Request</div>
+                            <div class="flow-item">Quick Service</div>
+                            <div class="flow-item">Closed Request</div>
+                            <div class="flow-item">Closed Commission</div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-column pattern-column">
+                            <div class="flow-header">Fulfillment Pattern</div>
+                            <div class="flow-item">Multi-Mfg Distribution</div>
+                            <div class="flow-item">Auto-Assignment</div>
+                            <div class="flow-item">Single Manufacturer</div>
+                            <div class="flow-item">Recurring Quota</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 6: Value Proposition -->
+        <div class="document-page content-page">
+            <div class="page-header">
+                <span class="page-number">6</span>
+            </div>
+            <h2 class="section-title">Value Proposition</h2>
+            <div class="content-body">
+                <div class="value-prop-section client-benefits">
+                    <h3 class="subsection-title">Client Benefits</h3>
+                    <div class="benefit-list">
+                        <div class="benefit-item">
+                            <strong>Faster Lead Times via Parallel Manufacturing</strong>
+                            <p>
+                                Large orders split across multiple manufacturers complete in parallel, 
+                                reducing delivery time by 50-70% compared to single-facility production. 
+                                Community manufacturing projects (e.g., 2000-unit orders) deliver in 
+                                days rather than weeks.
+                            </p>
+                        </div>
+                        <div class="benefit-item">
+                            <strong>Supply Chain Resilience</strong>
+                            <p>
+                                Distributed production nodes eliminate single points of failure. 
+                                Unlike traditional manufacturing reliant on one factory, distributed 
+                                networks continue operating even if individual nodes experience delays 
+                                or disruptions.
+                            </p>
+                        </div>
+                        <div class="benefit-item">
+                            <strong>Tariff & Shipping Risk Mitigation</strong>
+                            <p>
+                                Domestic production eliminates international shipping delays, tariff 
+                                uncertainty, and geopolitical supply chain risks. All manufacturing 
+                                occurs within the United States, reducing lead time variance and 
+                                customs complications.
+                            </p>
+                        </div>
+                        <div class="benefit-item">
+                            <strong>Transparent AI-Powered Pricing</strong>
+                            <p>
+                                Fair pay estimator (F2 model) provides transparent, data-driven pricing 
+                                based on material costs, labor hours, complexity, and market rates. 
+                                Clients receive upfront cost estimates before committing to orders.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="value-prop-section manufacturer-benefits">
+                    <h3 class="subsection-title">Manufacturer Benefits</h3>
+                    <div class="benefit-list">
+                        <div class="benefit-item">
+                            <strong>Monetize Idle Capacity</strong>
+                            <p>
+                                Turn underutilized equipment into revenue streams. Manufacturers can 
+                                accept jobs that match their available capacity, optimizing equipment 
+                                utilization without requiring full-time commitments.
+                            </p>
+                        </div>
+                        <div class="benefit-item">
+                            <strong>Access to Contracts Otherwise Unreachable</strong>
+                            <p>
+                                Small shops and individual operators gain access to contracts typically 
+                                reserved for large manufacturers. AI-powered matching connects manufacturers 
+                                with compatible jobs regardless of company size.
+                            </p>
+                        </div>
+                        <div class="benefit-item">
+                            <strong>Reputation System & Quality Tooling</strong>
+                            <p>
+                                Build trust through verified quality scores, completion rates, and client 
+                                ratings. AI-powered quality check (F3) provides objective quality assessment, 
+                                enabling manufacturers to demonstrate capability and build reputation.
+                            </p>
+                        </div>
+                        <div class="benefit-item">
+                            <strong>AI-Optimized Scheduling</strong>
+                            <p>
+                                Workflow scheduling (F4) optimizes task allocation across available devices, 
+                                balancing deadlines, profit margins, and capacity constraints. Manufacturers 
+                                maximize earnings while meeting delivery commitments.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="precedent-paragraph">
+                    <h3 class="subsection-title">Proven Precedent</h3>
+                    <p>
+                        Distributed production has proven effective under crisis constraints. During the 
+                        COVID-19 pandemic, maker and manufacturing networks produced personal protective 
+                        equipment (PPE) at massive scale, demonstrating that coordinated distributed 
+                        manufacturing can meet urgent national needs. Manufacturing collectives produced 
+                        millions of face shields, masks, and ventilator components using 3D printing, 
+                        CNC machining, and laser cutting across hundreds of distributed facilities.
+                    </p>
+                    <p>
+                        <strong>Project MAMA's claim:</strong> We make distributed production feasible as 
+                        an everyday system through AI-powered pricing (fair pay estimation), intelligent 
+                        matching (manufacturer ranking), automated quality control (vision-based QC), and 
+                        optimized scheduling (workflow algorithms). Where crisis-driven networks operated 
+                        through ad-hoc coordination, MAMA provides the infrastructure, trust mechanisms, 
+                        and economic incentives for sustainable distributed manufacturing at scale.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 7: Product Workflow & Feature Set -->
+        <div class="document-page content-page">
+            <div class="page-header">
+                <span class="page-number">7</span>
+            </div>
+            <h2 class="section-title">Product Workflow & Feature Set</h2>
+            <div class="content-body">
+                <p class="lead-paragraph">
+                    Project MAMA delivers an end-to-end platform connecting clients and manufacturers 
+                    through AI-powered matching, quality assurance, and workflow optimization.
+                </p>
+
+                <div class="workflow-pipeline">
+                    <div class="workflow-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <strong>Client Uploads STL + Specs</strong>
+                            <p>
+                                Client uploads 3D design file (STL format) with detailed specifications: 
+                                material (e.g., 6061-T6 Aluminum), tolerance (±0.005" in thou), quantity, 
+                                deadline, finish details (polished, brushed, sandblasted), coatings 
+                                (anodized, powder coat, paint with color specification), and manufacturing 
+                                type requirements (CNC, 3D printing, injection molding, etc.).
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="workflow-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <strong>AI Analysis Screen</strong>
+                            <p>
+                                System analyzes STL geometry and specifications, then calculates price/time 
+                                estimates and identifies top maker matches. F2 Pay Estimator provides suggested 
+                                pay with range ($807-$1,092 for example order). F1 Maker Ranking identifies 
+                                top 10-20 manufacturers ranked by equipment match, capacity, quality scores, 
+                                and historical performance. Estimated completion time displayed for each match.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="workflow-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <strong>Posting Mode Selection</strong>
+                            <p>
+                                Client chooses posting mode: <strong>Open Request</strong> (multi-manufacturer 
+                                distribution), <strong>Quick Service</strong> (auto-assignment), 
+                                <strong>Closed Request</strong> (single manufacturer selection), or 
+                                <strong>Closed Commission</strong> (recurring quota). For open requests 
+                                with quantity ≥100 units, system automatically triggers distribution algorithm.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="workflow-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <strong>Maker Discovery & Acceptance</strong>
+                            <p>
+                                Manufacturers view job recommendations in dashboard, filtered by compatibility 
+                                (material, tolerance tier, equipment type). For open requests, manufacturers 
+                                can accept partial quantities (e.g., 150 of 2000 units) based on available 
+                                capacity. System validates acceptance against remaining unassigned quantity 
+                                and manufacturer capacity constraints.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="workflow-step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <strong>Production Tracking</strong>
+                            <p>
+                                Workflow page displays all active jobs with assignments, showing which 
+                                manufacturer is producing what quantity, estimated delivery dates, and 
+                                progress (completed/assigned). For multi-manufacturer jobs, client views 
+                                aggregated progress across all assignments. F4 Workflow Scheduling optimizes 
+                                manufacturer task sequencing across available devices.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="workflow-step">
+                        <div class="step-number">6</div>
+                        <div class="step-content">
+                            <strong>QC Submission</strong>
+                            <p>
+                                Manufacturer uploads 4-6 photos of completed part from multiple angles. 
+                                F3 Vision Quality Check model compares photos to original STL file, analyzing 
+                                dimensional accuracy, surface quality, similarity, and anomaly detection. 
+                                Returns QC score (0-1), status (pass/review/fail), and detailed notes 
+                                (e.g., "Dimensions within tolerance", "Minor surface imperfections detected").
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="workflow-step">
+                        <div class="step-number">7</div>
+                        <div class="step-content">
+                            <strong>Shipping & Payment</strong>
+                            <p>
+                                Manufacturer enters carrier (UPS, FedEx, USPS, DHL) and tracking number. 
+                                System updates job status to "accepted" and triggers payment transaction 
+                                (status: "pending" → "authorized" → "paid"). Client receives shipping 
+                                notifications and tracking updates. Payment processed upon delivery confirmation.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="workflow-step">
+                        <div class="step-number">8</div>
+                        <div class="step-content">
+                            <strong>Messaging & Ratings</strong>
+                            <p>
+                                In-job messaging enables client-manufacturer communication throughout 
+                                production cycle. Upon completion, client rates manufacturer on quality, 
+                                timeliness, and communication. Ratings aggregated into manufacturer trust 
+                                score, influencing future ranking (F1) and match probability.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="differentiator-box">
+                    <h3 class="differentiator-title">Key Differentiator: Auto-Distribution Algorithm</h3>
+                    <p>
+                        For large open requests (200+ units), system automatically distributes quantity 
+                        across multiple manufacturers using weighted algorithm: <strong>Rank Score × 
+                        Capacity Score × Quality Score</strong>. Ensures proportional allocation based 
+                        on capability while maintaining minimum unit thresholds (10+ units per manufacturer) 
+                        and capacity constraints. Example: 2000-unit order distributed across 15-20 
+                        manufacturers, with each receiving 80-200 units based on their combined scores. 
+                        No manual coordination required — system handles matching, assignment, and 
+                        workload balancing automatically.
+                    </p>
+                </div>
+
+                <div class="workflow-visual">
+                    <div class="lifecycle-flow">
+                        <div class="lifecycle-lane client-lane">
+                            <div class="lane-label">Client Lane</div>
+                            <div class="lane-steps">
+                                <div class="lane-step">Upload STL</div>
+                                <div class="lane-step">AI Analysis</div>
+                                <div class="lane-step">Select Mode</div>
+                                <div class="lane-step">Track Progress</div>
+                                <div class="lane-step">Receive QC</div>
+                                <div class="lane-step">Payment</div>
+                                <div class="lane-step">Rate</div>
+                            </div>
+                        </div>
+                        <div class="lifecycle-connector"></div>
+                        <div class="lifecycle-lane maker-lane">
+                            <div class="lane-label">Maker Lane</div>
+                            <div class="lane-steps">
+                                <div class="lane-step">View Jobs</div>
+                                <div class="lane-step">Accept</div>
+                                <div class="lane-step">Schedule</div>
+                                <div class="lane-step">Produce</div>
+                                <div class="lane-step">Submit QC</div>
+                                <div class="lane-step">Ship</div>
+                                <div class="lane-step">Earn</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 8: AI Systems (All 8 Features) -->
+        <div class="document-page content-page">
+            <div class="page-header">
+                <span class="page-number">8</span>
+            </div>
+            <h2 class="section-title">AI Systems — All 8 Features</h2>
+            <div class="content-body">
+                <p class="lead-paragraph">
+                    Project MAMA employs four core AI models plus four supporting algorithms to enable 
+                    intelligent matching, pricing, quality assurance, workflow optimization, time estimation, 
+                    earnings tracking, recommendations, and rating aggregation.
+                </p>
+
+                <div class="model-cards-grid">
+                    <div class="model-card">
+                        <div class="model-header">
+                            <div class="model-name">F1 — Maker Ranking</div>
+                        </div>
+                        <div class="model-content">
+                            <div class="model-section">
+                                <strong>Inputs:</strong>
+                                <ul>
+                                    <li>Job specs (material, tolerance_tier, quantity, deadline_days)</li>
+                                    <li>Maker equipment inventory (device types, capabilities)</li>
+                                    <li>Maker materials array (compatible materials)</li>
+                                    <li>Historical performance (average_rating, total_jobs_completed, quality_score)</li>
+                                    <li>Capacity & quality scores (0-1 normalized)</li>
+                                    <li>Location data (distance calculation)</li>
+                                </ul>
+                            </div>
+                            <div class="model-section">
+                                <strong>Outputs:</strong>
+                                <ul>
+                                    <li>Ranked list of manufacturers (rank_score: 0-1)</li>
+                                    <li>Explanations JSON (why each manufacturer ranked highly)</li>
+                                    <li>Completion time estimate (hours, delivery date)</li>
+                                    <li>Match confidence scores</li>
+                                </ul>
+                            </div>
+                            <div class="model-section">
+                                <strong>Evaluation Metrics:</strong>
+                                <ul>
+                                    <li>Match success rate (job acceptance by top-ranked manufacturers)</li>
+                                    <li>On-time delivery rate (completion within estimated deadline)</li>
+                                    <li>Client satisfaction (post-completion ratings for matched manufacturers)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header">
+                            <div class="model-name">F2 — Fair Pay Estimator</div>
+                        </div>
+                        <div class="model-content">
+                            <div class="model-section">
+                                <strong>Inputs:</strong>
+                                <ul>
+                                    <li>Material type & cost per unit</li>
+                                    <li>Time estimate (setup_hours, estimated_hours per unit)</li>
+                                    <li>Complexity score (tolerance tier, finish requirements, coatings)</li>
+                                    <li>Urgency multiplier (deadline vs. standard_delivery_days)</li>
+                                    <li>Market rate per hour (regional adjustments)</li>
+                                </ul>
+                            </div>
+                            <div class="model-section">
+                                <strong>Outputs:</strong>
+                                <ul>
+                                    <li>Suggested pay (USD, fair market price)</li>
+                                    <li>Range (low: suggested × 0.85, high: suggested × 1.15)</li>
+                                    <li>Breakdown JSON (material_cost, labor_cost, overhead, margin)</li>
+                                    <li>Model version (for audit trail)</li>
+                                </ul>
+                            </div>
+                            <div class="model-section">
+                                <strong>Evaluation Metrics:</strong>
+                                <ul>
+                                    <li>Dispute rate (jobs with pricing disputes / total jobs)</li>
+                                    <li>Acceptance rate (manufacturer acceptance of suggested pay)</li>
+                                    <li>Variance (actual vs. estimated cost post-completion)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header">
+                            <div class="model-name">F3 — Vision Quality Check</div>
+                        </div>
+                        <div class="model-content">
+                            <div class="model-section">
+                                <strong>Inputs:</strong>
+                                <ul>
+                                    <li>STL file (3D model geometry, volume, surface area, bounding box)</li>
+                                    <li>Evidence photos (4-6 images from multiple angles)</li>
+                                    <li>Tolerance tier (low/medium/high, affects pass threshold)</li>
+                                    <li>Critical dimensions (optional: width, height, depth expectations)</li>
+                                </ul>
+                            </div>
+                            <div class="model-section">
+                                <strong>Outputs:</strong>
+                                <ul>
+                                    <li>QC score (0-1, overall quality assessment)</li>
+                                    <li>Status (pass / review / fail, based on threshold)</li>
+                                    <li>Similarity score (0-1, visual similarity to STL)</li>
+                                    <li>Dimensional accuracy (0-1, dimension compliance)</li>
+                                    <li>Surface quality (0-1, finish assessment)</li>
+                                    <li>Anomaly score (0-1, defect likelihood, higher = fewer defects)</li>
+                                    <li>Notes array (issues found)</li>
+                                </ul>
+                            </div>
+                            <div class="model-section">
+                                <strong>Evaluation Metrics:</strong>
+                                <ul>
+                                    <li>Agreement with human review (F1 score: precision/recall vs. expert QC assessment)</li>
+                                    <li>False pass rate (QC approved but later rejected by client)</li>
+                                    <li>False fail rate (QC rejected but later accepted by client)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header">
+                            <div class="model-name">F4 — Workflow Scheduling</div>
+                        </div>
+                        <div class="model-content">
+                            <div class="model-section">
+                                <strong>Inputs:</strong>
+                                <ul>
+                                    <li>Active jobs array (job_id, deadline, estimated_hours, device_type requirement, priority)</li>
+                                    <li>Available devices array (device_id, device_type, status, capabilities JSON)</li>
+                                    <li>Current time & business hours</li>
+                                    <li>Manufacturer capacity constraints</li>
+                                </ul>
+                            </div>
+                            <div class="model-section">
+                                <strong>Outputs:</strong>
+                                <ul>
+                                    <li>Optimized schedule (tasks ordered by priority with start/end times)</li>
+                                    <li>Device assignments (which device handles which job, when)</li>
+                                    <li>Utilization metrics (device_utilization %, idle_time)</li>
+                                    <li>Timeline visualization data</li>
+                                    <li>Optimization score (0-1, how well schedule meets constraints)</li>
+                                </ul>
+                            </div>
+                            <div class="model-section">
+                                <strong>Evaluation Metrics:</strong>
+                                <ul>
+                                    <li>On-time delivery rate (jobs completed by deadline)</li>
+                                    <li>Utilization improvement (before vs. after AI scheduling, % increase)</li>
+                                    <li>Profit optimization (earnings per hour improvement)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header">
+                            <div class="model-name">Time Calculator</div>
+                        </div>
+                        <div class="model-content">
+                            <div class="model-section">
+                                <strong>Inputs:</strong>
+                                <ul>
+                                    <li>Manufacturer historical completion data (past job durations, device types)</li>
+                                    <li>Job specifications (quantity, complexity, tolerance tier)</li>
+                                    <li>Device capabilities (printer speed, CNC machining time, setup time)</li>
+                                    <li>Current workload (active jobs, device availability)</li>
+                                </ul>
+                            </div>
+                            <div class="model-section">
+                                <strong>Outputs:</strong>
+                                <ul>
+                                    <li>Estimated completion time (hours, days)</li>
+                                    <li>Delivery date prediction (accounting for current workload)</li>
+                                    <li>Confidence interval (time range based on historical variance)</li>
+                                </ul>
+                            </div>
+                            <div class="model-section">
+                                <strong>Purpose:</strong>
+                                <ul>
+                                    <li>Learns from manufacturer past behavior to predict accurate completion times</li>
+                                    <li>Improves over time as more jobs are completed</li>
+                                    <li>Used by F1 Maker Ranking for deadline matching</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header">
+                            <div class="model-name">Earnings Calculator</div>
+                        </div>
+                        <div class="model-content">
+                            <div class="model-section">
+                                <strong>Inputs:</strong>
+                                <ul>
+                                    <li>Completed job records (pay received, job_id, completion_date)</li>
+                                    <li>Active job assignments (pending pay, estimated completion)</li>
+                                    <li>Time period (daily, weekly, monthly, all-time)</li>
+                                </ul>
+                            </div>
+                            <div class="model-section">
+                                <strong>Outputs:</strong>
+                                <ul>
+                                    <li>Total earnings (USD, all-time or period-specific)</li>
+                                    <li>Earnings by job (breakdown of revenue per completed job)</li>
+                                    <li>Earnings trends (growth over time, revenue per week/month)</li>
+                                    <li>Projected earnings (based on active jobs)</li>
+                                </ul>
+                            </div>
+                            <div class="model-section">
+                                <strong>Purpose:</strong>
+                                <ul>
+                                    <li>Track manufacturer revenue and financial performance</li>
+                                    <li>Display earnings metrics in manufacturer dashboard</li>
+                                    <li>Enable financial planning and capacity optimization</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header">
+                            <div class="model-name">Project Recommender</div>
+                        </div>
+                        <div class="model-content">
+                            <div class="model-section">
+                                <strong>Inputs:</strong>
+                                <ul>
+                                    <li>Manufacturer profile (equipment, materials, capacity, quality_score)</li>
+                                    <li>Available jobs (open requests, quick services, closed requests)</li>
+                                    <li>Pay-to-time ratio (high-value opportunities)</li>
+                                    <li>Manufacturer preferences (job types, material preferences)</li>
+                                </ul>
+                            </div>
+                            <div class="model-section">
+                                <strong>Outputs:</strong>
+                                <ul>
+                                    <li>Recommended jobs list (ranked by match score)</li>
+                                    <li>Match explanations (why each job is recommended)</li>
+                                    <li>Priority flags ("quick money", "high-value", "good fit")</li>
+                                </ul>
+                            </div>
+                            <div class="model-section">
+                                <strong>Purpose:</strong>
+                                <ul>
+                                    <li>Surfaces "quick money" jobs for manufacturers (high pay-to-time ratio)</li>
+                                    <li>Matches jobs to manufacturer equipment and capabilities</li>
+                                    <li>Helps manufacturers optimize earnings by accepting best-fit jobs</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header">
+                            <div class="model-name">Rating Aggregator</div>
+                        </div>
+                        <div class="model-content">
+                            <div class="model-section">
+                                <strong>Inputs:</strong>
+                                <ul>
+                                    <li>Client ratings (1-5 stars, quality, timeliness, communication)</li>
+                                    <li>QC scores (F3 Vision Quality Check results)</li>
+                                    <li>On-time delivery rate (completed jobs vs. deadline)</li>
+                                    <li>Recency weighting (recent ratings weighted higher)</li>
+                                </ul>
+                            </div>
+                            <div class="model-section">
+                                <strong>Outputs:</strong>
+                                <ul>
+                                    <li>Average rating (weighted average of all ratings)</li>
+                                    <li>Rating distribution (5-star, 4-star, etc. breakdown)</li>
+                                    <li>Quality score (0-1, combined QC + client ratings)</li>
+                                    <li>Trust score (overall manufacturer reputation metric)</li>
+                                </ul>
+                            </div>
+                            <div class="model-section">
+                                <strong>Purpose:</strong>
+                                <ul>
+                                    <li>Prevents new users from dominating rankings (weighted by job count)</li>
+                                    <li>Combines multiple quality signals (ratings + QC + timeliness)</li>
+                                    <li>Updates manufacturer quality_score for F1 Maker Ranking</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="additional-ai-section">
+                    <h3 class="subsection-title">Additional Algorithm: Auto-Distribution</h3>
+                    <div class="ai-features-list">
+                        <div class="ai-feature-item">
+                            <strong>Auto-Distribution Algorithm</strong>
+                            <p>
+                                Weighted distribution: (rank_score × capacity_score × quality_score) / total_score. 
+                                Ensures proportional allocation while respecting minimum unit thresholds and capacity 
+                                constraints. Handles dynamic assignment as manufacturers accept/reject portions. 
+                                Automatically distributes large open requests (200+ units) across multiple manufacturers 
+                                based on combined scores, eliminating manual coordination.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 9: System Architecture -->
+        <div class="document-page content-page architecture-page">
+            <div class="page-header">
+                <span class="page-number">9</span>
+            </div>
+            <h2 class="section-title">System Architecture Overview</h2>
+            <div class="architecture-content">
+                <div class="figma-placeholder">
+                    <div class="placeholder-text-large">
+                        [Figma System Architecture Diagram]
+                    </div>
+                    <div class="placeholder-note">
+                        Include: Frontend → API Routes → FastAPI Backend → AI Models → Supabase Database/Storage
+                    </div>
+                </div>
+                
+                <div class="architecture-legend">
+                    <h3 class="legend-title">System Components</h3>
+                    <div class="legend-items">
+                        <div class="legend-item">
+                            <strong>Frontend:</strong> Next.js 16.1.2 (App Router), TypeScript, Tailwind CSS, Three.js (3D STL viewer)
+                        </div>
+                        <div class="legend-item">
+                            <strong>Backend:</strong> FastAPI (Python) + Next.js API Routes (TypeScript)
+                        </div>
+                        <div class="legend-item">
+                            <strong>Database:</strong> Supabase PostgreSQL + Storage + Auth
+                        </div>
+                        <div class="legend-item">
+                            <strong>AI Services:</strong> /api/ai/* → FastAPI model endpoints (F1-F4, Time Calculator, Earnings, Recommender, Rating Aggregator)
+                        </div>
+                        <div class="legend-item">
+                            <strong>Job Pipeline:</strong> jobs → assignments → qc → shipping → transactions
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 10: Video Demo & References -->
+        <div class="document-page content-page">
+            <div class="page-header">
+                <span class="page-number">10</span>
+            </div>
+            <h2 class="section-title">Video Demo & References</h2>
+            <div class="content-body">
+                <div class="video-section">
+                    <h3 class="subsection-title">Video Demo</h3>
+                    <div class="video-placeholder">
+                        <div class="qr-placeholder">
+                            <div class="qr-code-placeholder">
+                                [QR Code]
+                            </div>
+                            <div class="qr-url">demo.mama-project.com/video</div>
+                        </div>
+                        <div class="video-description">
+                            <p><strong>Demo Highlights:</strong></p>
+                            <ul class="demo-bullets">
+                                <li><strong>Client Upload + AI Analysis:</strong> Complete order creation workflow with STL upload, specification entry, AI-powered price estimation (F2), and manufacturer matching (F1)</li>
+                                <li><strong>Open Request Auto-Distribution:</strong> 2000-unit order automatically distributed across 15+ manufacturers based on rank, capacity, and quality scores</li>
+                                <li><strong>Maker QC + Shipping + Payment Status:</strong> Quality check submission (F3) with photo upload, STL comparison, QC results display, shipping tracking entry, and payment transaction status</li>
+                                <li><strong>Workflow Management:</strong> Manufacturer dashboard showing AI-optimized scheduling (F4), time estimates, earnings tracking, and project recommendations</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="references-section">
+                    <h3 class="subsection-title">References</h3>
+                    <div class="references-list">
+                        <div class="reference-item">
+                            <sup>1</sup> Grand View Research. "3D Printing Market Size, Share & Trends Analysis Report by Component, by Printer Type, by Technology, by Software, by Application, by Vertical, by Region, and Segment Forecasts, 2024-2030." <em>Grand View Research</em>, 2024.
+                        </div>
+                        <div class="reference-item">
+                            <sup>2</sup> Bureau of Economic Analysis, U.S. Department of Commerce. 
+                            "U.S. International Trade in Goods and Services, Annual 2024." 
+                            <em>BEA News Release</em>, February 2025.
+                        </div>
+                        <div class="reference-item">
+                            <sup>3</sup> Fab Foundation. "Global Fab Lab Network Statistics and Distribution." 
+                            <em>Fab Foundation Annual Report</em>, 2024.
+                        </div>
+                        <div class="reference-item">
+                            <sup>4</sup> Cooney, M., et al. "Distributed Manufacturing Networks During COVID-19: 
+                            A Case Study of Maker Response." <em>Journal of Manufacturing Systems</em>, vol. 58, 
+                            2021, pp. 112-125.
+                        </div>
+                        <div class="reference-item">
+                            <sup>5</sup> National Institutes of Health. "NIH 3D Print Exchange and Maker Response 
+                            to PPE Shortages." <em>NIH News Release</em>, April 2020.
+                        </div>
+                        <div class="reference-item">
+                            <sup>6</sup> Make: Magazine. "The Maker Movement Response to COVID-19: By the Numbers." 
+                            <em>Make: Online</em>, June 2020.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

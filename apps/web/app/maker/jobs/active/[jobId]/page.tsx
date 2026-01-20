@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import STLViewer from '@/components/STLViewer';
+import JobMessages from '@/components/JobMessages';
+import { DEMO_MODE, getManufacturerJobs, getDemoJobs, saveDemoJob, updateRevaWorkflow, type DemoJob } from '@/lib/demoData';
 
 export default function ActiveJobDetailPage() {
   const params = useParams();
@@ -11,26 +13,77 @@ export default function ActiveJobDetailPage() {
   const jobId = params.jobId as string;
 
   const [showDescription, setShowDescription] = useState(false);
+  const [job, setJob] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // TODO: Fetch actual job data - using more accurate pay amounts
-  const [job] = useState({
-    id: jobId,
-    product_name: 'Bracket Assembly',
-    client_name: 'Acme Corp',
-    status: 'in_production',
-    quantity: 50,
-    completed: 30,
-    deadline: '2026-02-15',
-    pay_amount: 3247.50, // More accurate: $64.95 per unit for precision CNC aluminum work
-    started_at: '2026-01-20',
-    material: '6061-T6 Aluminum',
-    material_cost: 245.00, // ~$4.90 per unit for material
-    tolerance: '±0.005"',
-    expected_time: '12 hours',
-    machine: 'CNC Milling',
-    extended_description: 'Precision bracket assembly for mounting system. Must maintain ±0.005" tolerance throughout. Requires smooth finish with no burrs. Parts will be used in aerospace application, so quality is critical. All edges must be deburred and cleaned.',
-    stl_file: null as File | null, // TODO: Load actual STL file from storage
-  });
+  useEffect(() => {
+    if (DEMO_MODE) {
+      const jobs = getManufacturerJobs('reva_demo_id');
+      const foundJob = jobs.find(j => j.id === jobId);
+      if (foundJob) {
+        // Calculate completed based on status
+        let completed = 0;
+        if (foundJob.status === 'in_production') {
+          completed = Math.floor(foundJob.quantity * 0.6); // 60% done
+        } else if (foundJob.status === 'qc_pending' || foundJob.status === 'shipped') {
+          completed = foundJob.quantity;
+        }
+
+        // Get pay amount
+        let payAmount = foundJob.suggested_pay;
+        if (foundJob.assigned_manufacturers) {
+          const revaAssignment = foundJob.assigned_manufacturers.find((m: any) => m.manufacturer_id === 'reva_demo_id');
+          if (revaAssignment) {
+            payAmount = revaAssignment.pay_amount;
+          }
+        }
+
+        setJob({
+          id: foundJob.id,
+          product_name: foundJob.title,
+          client_name: foundJob.client_name || 'Client',
+          status: foundJob.status,
+          quantity: foundJob.quantity,
+          completed,
+          deadline: foundJob.deadline,
+          pay_amount: payAmount,
+          started_at: foundJob.created_at,
+          material: foundJob.material,
+          tolerance: foundJob.tolerance,
+          expected_time: '12 hours', // TODO: Calculate from workflow
+          machine: foundJob.manufacturing_type?.[0] || 'CNC / 3D Printing',
+          extended_description: foundJob.title + ' • Material: ' + foundJob.material + ' • Quantity: ' + foundJob.quantity + '. This is an actively running service.',
+          stl_file_url: foundJob.stl_file_url,
+        });
+      } else {
+        // Job not found - redirect or show error
+        router.push('/maker/dashboard');
+      }
+      setLoading(false);
+    } else {
+      // TODO: Fetch from API
+      setLoading(false);
+    }
+  }, [jobId, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-200 to-white flex items-center justify-center">
+        <div className="text-[#0a1929]">Loading job details...</div>
+      </div>
+    );
+  }
+
+  if (!job) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-200 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-[#0a1929] text-xl mb-4">Job not found</div>
+          <Link href="/maker/dashboard" className="text-blue-600 hover:underline">Back to Dashboard</Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-200 to-white">
@@ -49,10 +102,52 @@ export default function ActiveJobDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* STL CAD File Viewer */}
           <div className="bg-[#0a1929] border border-[#1a2332] p-6">
-            <h2 className="text-xl font-semibold text-white mb-4 heading-font">CAD File (STL Model)</h2>
-            <div className="bg-black border border-[#253242] min-h-[400px] flex items-center justify-center">
-              {job.stl_file ? (
-                <STLViewer file={job.stl_file} width={500} height={400} />
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-white heading-font">CAD File (STL Model)</h2>
+              {job.stl_file_url && (
+                <a
+                  href={job.stl_file_url}
+                  download
+                  className="bg-[#253242] hover:bg-[#3a4552] text-white px-4 py-2 border border-[#3a4552] transition-colors text-sm"
+                >
+                  ⬇ Download STL
+                </a>
+              )}
+            </div>
+            <div className="bg-black border border-[#253242] min-h-[400px] flex items-center justify-center relative">
+              {job.stl_file_url ? (
+                <div className="relative w-full h-full">
+                  {/* Spinning STL Preview - Mesh of Dots */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="relative w-64 h-64 stl-mesh-container">
+                      <div className="stl-mesh-3d">
+                        {Array.from({ length: 64 }).map((_, i) => {
+                          const row = Math.floor(i / 8);
+                          const col = i % 8;
+                          const x = (col - 3.5) * 16;
+                          const y = (row - 3.5) * 16;
+                          const z = Math.sin((i / 64) * Math.PI * 2) * 20;
+                          
+                          return (
+                            <div
+                              key={i}
+                              className="stl-dot"
+                              style={{
+                                '--x': `${x}px`,
+                                '--y': `${y}px`,
+                                '--z': `${z}px`,
+                                '--delay': `${(i * 0.05)}s`,
+                              } as React.CSSProperties}
+                            />
+                          );
+                        })}
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                        <span className="text-[#9ca3af] text-sm font-semibold bg-[#0a1929] px-3 py-1 border border-[#1a2332]">STL</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <div className="text-center p-8">
                   <div className="text-[#9ca3af] mb-4">STL Model Preview</div>
@@ -118,26 +213,65 @@ export default function ActiveJobDetailPage() {
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="bg-[#0a1929] border border-[#1a2332] p-6">
-          <div className="flex gap-4">
-            {job.completed >= job.quantity && job.status === 'in_production' && (
-              <Link
-                href={`/maker/jobs/qc/${job.id}`}
-                className="flex-1 bg-[#253242] hover:bg-[#3a4552] text-white px-6 py-3 border border-[#3a4552] transition-colors text-center font-medium"
-              >
-                Check Quality
-              </Link>
-            )}
-            {job.status === 'qc_approved' && (
-              <Link
-                href={`/maker/jobs/ship/${job.id}`}
-                className="flex-1 bg-[#253242] hover:bg-[#3a4552] text-white px-6 py-3 border border-[#3a4552] transition-colors text-center font-medium"
-              >
-                Ship Order
-              </Link>
-            )}
+        {/* Start Button - For newly accepted jobs */}
+        {job.status === 'accepted' && (
+          <div className="bg-[#0a1929] border border-[#1a2332] p-6 mb-6">
+            <h2 className="text-xl font-semibold text-white mb-4 heading-font">Start Production</h2>
+            <p className="text-[#9ca3af] text-sm mb-4">
+              Click the button below to start production on this job. Once started, the job will appear as "Running on Device" in your dashboard.
+            </p>
+            <button
+              onClick={() => {
+                if (DEMO_MODE && typeof window !== 'undefined') {
+                  const jobs = getDemoJobs();
+                  const foundJob = jobs.find(j => j.id === jobId);
+                  if (foundJob) {
+                    foundJob.status = 'in_production';
+                    saveDemoJob(foundJob);
+                    // Update workflow
+                    updateRevaWorkflow();
+                    // Reload the page to show updated status
+                    window.location.reload();
+                  }
+                }
+              }}
+              className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 border border-green-700 transition-colors text-center font-medium"
+            >
+              Start Production →
+            </button>
           </div>
+        )}
+
+        {/* Action Buttons - Quality Control & Submission */}
+        {job.status !== 'accepted' && (
+          <div className="bg-[#0a1929] border border-[#1a2332] p-6">
+            <h2 className="text-xl font-semibold text-white mb-4 heading-font">Quality Control & Submission</h2>
+            <p className="text-[#9ca3af] text-sm mb-4">
+              Upload photos of your completed parts (4-6 photos recommended) for AI-powered quality control check.
+            </p>
+            <div className="flex gap-4">
+              {(job.status === 'in_production' || job.completed >= job.quantity) && (
+                <Link
+                  href={`/maker/jobs/qc/${job.id}`}
+                  className="flex-1 bg-[#253242] hover:bg-[#3a4552] text-white px-6 py-3 border border-[#3a4552] transition-colors text-center font-medium"
+                >
+                  Submit for Quality Check →
+                </Link>
+              )}
+              {job.status === 'qc_approved' || job.status === 'qc_pending' ? (
+                <Link
+                  href={`/maker/jobs/ship/${job.id}`}
+                  className="flex-1 bg-[#253242] hover:bg-[#3a4552] text-white px-6 py-3 border border-[#3a4552] transition-colors text-center font-medium"
+                >
+                  Ship Order →
+                </Link>
+              ) : null}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-6">
+          <JobMessages jobId={jobId} />
         </div>
       </div>
     </div>

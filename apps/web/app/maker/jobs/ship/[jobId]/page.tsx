@@ -33,12 +33,21 @@ export default function ShippingPage() {
     setSubmitting(true);
 
     try {
-      // TODO: Update job status to 'shipped' in database
-      // TODO: Create shipping record with tracking number
-      
-      setTimeout(() => {
-        router.push('/maker/jobs/active');
-      }, 1000);
+      const res = await fetch(`/api/jobs/${jobId}/ship`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          carrier: shippingCarrier,
+          tracking_number: trackingNumber,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error('Ship failed:', err);
+        setSubmitting(false);
+        return;
+      }
+      router.push('/maker/jobs/active');
     } catch (error) {
       console.error('Error marking as shipped:', error);
       setSubmitting(false);

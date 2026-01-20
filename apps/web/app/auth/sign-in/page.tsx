@@ -68,7 +68,8 @@ export default function SignInPage() {
         if (signInError.message.includes('Invalid login credentials')) {
           setError('Invalid email or password. Please try again.');
         } else if (signInError.message.includes('Email not confirmed')) {
-          setError('Please verify your email before signing in. Check your inbox.');
+          // Email verification should be disabled, but show helpful error if it's still on
+          setError('Email verification is enabled. Please verify your email or contact support to disable email verification for testing.');
         } else {
           throw signInError;
         }

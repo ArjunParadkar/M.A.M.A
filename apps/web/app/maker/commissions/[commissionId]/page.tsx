@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import JobMessages from '@/components/JobMessages';
 
 export default function CommissionDetailPage() {
   const params = useParams();
@@ -65,6 +66,25 @@ export default function CommissionDetailPage() {
             <div><span className="text-[#9ca3af]">Start Date:</span> <span className="text-white ml-2">{new Date(commission.startDate).toLocaleDateString()}</span></div>
             <div><span className="text-[#9ca3af]">End Date:</span> <span className="text-white ml-2">{new Date(commission.endDate).toLocaleDateString()}</span></div>
           </div>
+        </div>
+
+        {/* QC Submission for Commissions */}
+        <div className="bg-[#0a1929] border border-[#1a2332] p-6">
+          <h2 className="text-xl font-semibold text-white mb-4 heading-font">Quality Control & Submission</h2>
+          <p className="text-[#9ca3af] text-sm mb-4">
+            Upload photos of completed commission units for AI-powered quality control check.
+          </p>
+          <Link
+            href={`/maker/jobs/qc/${commissionId}`}
+            className="inline-block bg-[#253242] hover:bg-[#3a4552] text-white px-6 py-3 border border-[#3a4552] transition-colors font-medium"
+          >
+            Submit for Quality Check →
+          </Link>
+        </div>
+
+        {/* Messages */}
+        <div className="mt-6">
+          <JobMessages jobId={commissionId} />
         </div>
       </div>
     </div>

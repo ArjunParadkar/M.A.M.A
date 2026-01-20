@@ -165,7 +165,9 @@ function ManufacturerSignUp({ onBack }: { onBack: () => void }) {
           data: {
             role: 'manufacturer',
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent('/auth/complete-profile?role=manufacturer')}`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent('/maker/dashboard')}`,
+          // Note: Email verification is disabled in Supabase dashboard settings
+          // Users are auto-confirmed, so we can redirect immediately
         },
       });
 
@@ -179,8 +181,15 @@ function ManufacturerSignUp({ onBack }: { onBack: () => void }) {
         return;
       }
 
-      // Redirect to complete profile
-      router.push('/auth/complete-profile?role=manufacturer');
+      // Check if user was immediately confirmed (email verification disabled)
+      if (data.user && (data.session || data.user.email_confirmed_at)) {
+        // User is confirmed, redirect to complete profile (which will redirect to dashboard)
+        router.push('/auth/complete-profile?role=manufacturer');
+      } else {
+        // Email verification is enabled - redirect to complete profile anyway
+        // The user can still complete profile while waiting for email
+        router.push('/auth/complete-profile?role=manufacturer');
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to create account. Please try again.');
       setLoading(false);
@@ -407,7 +416,9 @@ function ClientSignUp({ onBack }: { onBack: () => void }) {
           data: {
             role: 'client',
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent('/auth/complete-profile?role=client')}`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent('/client/dashboard')}`,
+          // Note: Email verification is disabled in Supabase dashboard settings
+          // Users are auto-confirmed, so we can redirect immediately
         },
       });
 
@@ -421,8 +432,15 @@ function ClientSignUp({ onBack }: { onBack: () => void }) {
         return;
       }
 
-      // Redirect to complete profile
-      router.push('/auth/complete-profile?role=client');
+      // Check if user was immediately confirmed (email verification disabled)
+      if (data.user && (data.session || data.user.email_confirmed_at)) {
+        // User is confirmed, redirect to complete profile (which will redirect to dashboard)
+        router.push('/auth/complete-profile?role=client');
+      } else {
+        // Email verification is enabled - redirect to complete profile anyway
+        // The user can still complete profile while waiting for email
+        router.push('/auth/complete-profile?role=client');
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to create account. Please try again.');
       setLoading(false);

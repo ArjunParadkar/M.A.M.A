@@ -20,26 +20,13 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Fetch active jobs for this manufacturer
+    // Fetch in-progress jobs for this manufacturer
     const supabase = await createClient();
     const { data: activeJobs, error: jobsError } = await supabase
-      .from('active_jobs')
-      .select(`
-        job_id,
-        jobs!inner (
-          id,
-          material,
-          quantity,
-          tolerance_tier,
-          deadline,
-          suggested_pay,
-          estimated_hours,
-          manufacturing_types,
-          stl_file_url
-        )
-      `)
-      .eq('manufacturer_id', manufacturer_id)
-      .eq('status', 'in_progress');
+      .from('jobs')
+      .select('*')
+      .eq('selected_manufacturer_id', manufacturer_id)
+      .in('status', ['assigned', 'in_production', 'qc_pending']);
     
     if (jobsError) {
       console.error('Error fetching active jobs:', jobsError);
@@ -64,8 +51,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Convert jobs to tasks
-    const tasks = (activeJobs || []).map((aj: any) => {
-      const job = aj.jobs;
+    const tasks = (activeJobs || []).map((job: any) => {
       const deadline = job.deadline ? new Date(job.deadline) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       
       // Determine device types from manufacturing types
@@ -88,10 +74,10 @@ export async function POST(request: NextRequest) {
       return {
         job_id: job.id,
         priority: priority,
-        estimated_hours: job.estimated_hours || (job.quantity || 1) * 2.0,
+        estimated_hours: (job.quantity || 1) * 2.0,
         deadline: deadline.toISOString(),
         required_device_types: deviceTypes.length > 0 ? deviceTypes : ['general'],
-        pay_amount: job.suggested_pay || 0,
+        pay_amount: 0,
         materials_needed: [job.material || 'Unknown'],
         tolerance_tier: job.tolerance_tier || 'medium',
       };

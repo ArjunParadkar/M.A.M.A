@@ -8,8 +8,9 @@ import { NextRequest, NextResponse } from 'next/server';
 const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
 
 export async function POST(request: NextRequest) {
+  let body: any = {};
   try {
-    const body = await request.json();
+    body = await request.json();
     
     // Validate required fields
     if (!body.material || !body.quantity || !body.estimated_hours) {

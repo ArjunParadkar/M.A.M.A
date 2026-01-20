@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { DEMO_MODE, getManufacturerJobs, type DemoJob } from '@/lib/demoData';
 
 interface ActiveJob {
   id: string;
@@ -15,40 +16,118 @@ interface ActiveJob {
   deadline: string;
   pay_amount: number;
   started_at: string;
+  material?: string;
+  machine?: string;
 }
 
 export default function ActiveJobsPage() {
   const router = useRouter();
-  const [jobs, setJobs] = useState<ActiveJob[]>([
-    {
-      id: 'active1',
-      job_id: 'job1',
-      client_name: 'Acme Corp',
-      product_name: 'Bracket Assembly',
-      status: 'in_production',
-      quantity: 50,
-      completed: 30,
-      deadline: '2026-02-15',
-      pay_amount: 2450.00,
-      started_at: '2026-01-20',
-    },
-    {
-      id: 'active2',
-      job_id: 'job2',
-      client_name: 'TechStart Inc',
-      product_name: 'Custom Housing',
-      status: 'qc_pending',
-      quantity: 100,
-      completed: 100,
-      deadline: '2026-02-20',
-      pay_amount: 3200.00,
-      started_at: '2026-01-18',
-    },
-  ]);
+  const [jobs, setJobs] = useState<ActiveJob[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (DEMO_MODE) {
+      const demoJobs = getManufacturerJobs('reva_demo_id').filter(j => 
+        j.status === 'accepted' || j.status === 'in_production' || j.status === 'qc_pending' || j.status === 'shipped'
+      );
+      
+      const activeJobs: ActiveJob[] = demoJobs.map(job => {
+        // Calculate completed based on status
+        let completed = 0;
+        if (job.status === 'in_production') {
+          completed = Math.floor(job.quantity * 0.6); // 60% done
+        } else if (job.status === 'qc_pending' || job.status === 'shipped') {
+          completed = job.quantity;
+        }
+
+        // Get pay amount
+        let payAmount = job.suggested_pay;
+        if (job.assigned_manufacturers) {
+          const revaAssignment = job.assigned_manufacturers.find(m => m.manufacturer_id === 'reva_demo_id');
+          if (revaAssignment) {
+            payAmount = revaAssignment.pay_amount;
+          }
+        }
+
+        return {
+          id: job.id,
+          job_id: job.id,
+          client_name: job.client_name || 'Client',
+          product_name: job.title,
+          status: job.status === 'accepted' ? 'in_production' : 
+                  job.status === 'qc_pending' ? 'qc_pending' :
+                  job.status === 'shipped' ? 'qc_approved' : 'in_production',
+          quantity: job.quantity,
+          completed,
+          deadline: job.deadline,
+          pay_amount: payAmount,
+          started_at: job.created_at,
+          material: job.material,
+          machine: job.manufacturing_type?.[0] || 'CNC / 3D Printing',
+        };
+      });
+      
+      setJobs(activeJobs);
+      setLoading(false);
+
+      // Poll for updates
+      const interval = setInterval(() => {
+        const updated = getManufacturerJobs('reva_demo_id').filter(j => 
+          j.status === 'accepted' || j.status === 'in_production' || j.status === 'qc_pending' || j.status === 'shipped'
+        );
+        const updatedJobs: ActiveJob[] = updated.map(job => {
+          let completed = 0;
+          if (job.status === 'in_production') {
+            completed = Math.floor(job.quantity * 0.6);
+          } else if (job.status === 'qc_pending' || job.status === 'shipped') {
+            completed = job.quantity;
+          }
+          let payAmount = job.suggested_pay;
+          if (job.assigned_manufacturers) {
+            const revaAssignment = job.assigned_manufacturers.find(m => m.manufacturer_id === 'reva_demo_id');
+            if (revaAssignment) {
+              payAmount = revaAssignment.pay_amount;
+            }
+          }
+          return {
+            id: job.id,
+            job_id: job.id,
+            client_name: job.client_name || 'Client',
+            product_name: job.title,
+            status: job.status === 'accepted' ? 'in_production' : 
+                    job.status === 'qc_pending' ? 'qc_pending' :
+                    job.status === 'shipped' ? 'qc_approved' : 'in_production',
+            quantity: job.quantity,
+            completed,
+            deadline: job.deadline,
+            pay_amount: payAmount,
+            started_at: job.created_at,
+            material: job.material,
+            machine: job.manufacturing_type?.[0] || 'CNC / 3D Printing',
+          };
+        });
+        setJobs(updatedJobs);
+      }, 2000);
+
+      return () => clearInterval(interval);
+    } else {
+      // TODO: Fetch from API
+      setLoading(false);
+    }
+  }, []);
 
   const handleUpdateProgress = (jobId: string, completed: number) => {
     setJobs(jobs.map(j => j.id === jobId ? { ...j, completed } : j));
+    // TODO: Update in demoData or API
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-200 to-white flex items-center justify-center">
+        <div className="text-[#0a1929]">Loading active jobs...</div>
+      </div>
+    );
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -122,11 +201,11 @@ export default function ActiveJobsPage() {
                 </div>
                 <div>
                   <span className="text-[#9ca3af]">Material:</span>
-                  <span className="text-white ml-2">6061-T6 Aluminum</span>
+                  <span className="text-white ml-2">{job.material || 'N/A'}</span>
                 </div>
                 <div>
                   <span className="text-[#9ca3af]">Machine:</span>
-                  <span className="text-white ml-2">CNC Milling</span>
+                  <span className="text-white ml-2">{job.machine || 'N/A'}</span>
                 </div>
                 <div>
                   <span className="text-[#9ca3af]">Deadline:</span>
@@ -136,37 +215,35 @@ export default function ActiveJobsPage() {
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-4 border-t border-[#253242]">
-                {job.status === 'in_production' && job.completed < job.quantity && (
-                  <button
-                    onClick={() => handleUpdateProgress(job.id, Math.min(job.completed + 10, job.quantity))}
+                <Link
+                  href={`/maker/jobs/active/${job.id}`}
+                  className="bg-[#253242] hover:bg-[#3a4552] text-white px-4 py-2 border border-[#3a4552] transition-colors text-sm"
+                >
+                  View Details
+                </Link>
+                {job.status === 'in_production' && (
+                  <Link
+                    href={`/maker/jobs/qc/${job.id}`}
                     className="bg-[#253242] hover:bg-[#3a4552] text-white px-4 py-2 border border-[#3a4552] transition-colors text-sm"
                   >
-                    Update Progress
-                  </button>
-                )}
-                {job.completed >= job.quantity && job.status === 'in_production' && (
-                  <button
-                    onClick={() => router.push(`/maker/jobs/qc/${job.id}`)}
-                    className="bg-[#253242] hover:bg-[#3a4552] text-white px-4 py-2 border border-[#3a4552] transition-colors"
-                  >
                     Submit for QC
-                  </button>
+                  </Link>
                 )}
                 {job.status === 'qc_pending' && (
                   <button
                     disabled
-                    className="bg-[#253242] text-[#9ca3af] px-4 py-2 border border-[#3a4552] cursor-not-allowed"
+                    className="bg-[#253242] text-[#9ca3af] px-4 py-2 border border-[#3a4552] cursor-not-allowed text-sm"
                   >
                     Awaiting QC Review
                   </button>
                 )}
                 {job.status === 'qc_approved' && (
-                  <button
-                    onClick={() => router.push(`/maker/jobs/ship/${job.id}`)}
-                    className="bg-[#253242] hover:bg-[#3a4552] text-white px-4 py-2 border border-[#3a4552] transition-colors"
+                  <Link
+                    href={`/maker/jobs/ship/${job.id}`}
+                    className="bg-[#253242] hover:bg-[#3a4552] text-white px-4 py-2 border border-[#3a4552] transition-colors text-sm"
                   >
                     Mark as Shipped
-                  </button>
+                  </Link>
                 )}
               </div>
             </div>

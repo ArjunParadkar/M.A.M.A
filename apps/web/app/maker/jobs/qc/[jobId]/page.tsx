@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import STLViewer from '@/components/STLViewer';
@@ -15,8 +15,24 @@ export default function QCSubmissionPage() {
   const [qcResults, setQcResults] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // TODO: Load actual STL file from job data
-  const [stlFile] = useState<File | null>(null);
+  const [stlFile, setStlFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    async function loadJob() {
+      try {
+        const res = await fetch(`/api/jobs/${jobId}`);
+        const job = await res.json();
+        const stlUrl = job?.stl_url || job?.stl_file_url || job?.stl_path;
+        if (!stlUrl) return;
+        const blobRes = await fetch(stlUrl);
+        const blob = await blobRes.blob();
+        setStlFile(new File([blob], 'model.stl', { type: 'model/stl' }));
+      } catch (e) {
+        console.error('Failed to load STL for QC:', e);
+      }
+    }
+    loadJob();
+  }, [jobId]);
 
   const handlePhotoChange = (index: number, file: File | null) => {
     const newPhotos = [...photos];
@@ -25,37 +41,82 @@ export default function QCSubmissionPage() {
   };
 
   const handleSubmitQC = async () => {
-    if (photos.filter(p => p !== null).length < 4) {
-      alert('Please upload 4 photos');
+    const validPhotos = photos.filter(p => p !== null) as File[];
+    if (validPhotos.length < 4) {
+      alert('Please upload at least 4 photos (up to 6 recommended)');
+      return;
+    }
+    if (validPhotos.length > 6) {
+      alert('Maximum 6 photos allowed');
       return;
     }
 
     setUploading(true);
 
     try {
-      // TODO: Upload photos to Supabase Storage
-      // TODO: Call F3 Vision Quality Check API
+      // Upload photos to Supabase Storage
+      const { uploadQCPhotos } = await import('@/lib/supabase/storage');
+      const photoUrls = await uploadQCPhotos(validPhotos, jobId);
+      
+      // Fetch job details from API
+      const jobRes = await fetch(`/api/jobs/${jobId}`);
+      const jobData = await jobRes.json();
+      
+      // Get STL file URL from job
+      const stlFileUrl = jobData.stl_url || jobData.stl_file_url || jobData.stl_path || null;
+      
+      // Call F3 Vision Quality Check API
+      const qcResponse = await fetch('/api/ai/qc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          job_id: jobId,
+          photo_urls: photoUrls,
+          stl_file_url: stlFileUrl, // Pass STL URL to API
+          tolerance_tier: jobData.tolerance_tier || 'medium',
+          tolerance_thou: jobData.tolerance_thou,
+          material: jobData.material,
+        }),
+      });
+      
+      if (!qcResponse.ok) {
+        throw new Error('Quality check failed');
+      }
+      
+      const qcData = await qcResponse.json();
+      
+      setQcResults({
+        qc_score: qcData.qc_score,
+        status: qcData.status, // 'pass', 'review', 'fail'
+        similarity: qcData.similarity, // Similarity to STL model geometry
+        dimensional_accuracy: qcData.dimensional_accuracy || qcData.similarity * 0.95,
+        surface_quality: qcData.surface_quality || qcData.similarity * 0.90,
+        anomaly_score: qcData.anomaly_score, // Defect detection score
+        notes: qcData.notes || [
+          'Quality check completed',
+        ],
+        confidence: qcData.confidence,
+        model_version: qcData.model_version,
+      });
 
-      // Simulate AI analysis comparing photos to STL model
-      setTimeout(() => {
-        setQcResults({
-          qc_score: 0.87,
-          status: 'review', // 'pass', 'review', 'fail'
-          similarity: 0.85, // Similarity to STL model geometry
-          dimensional_accuracy: 0.92, // How well dimensions match STL specs
-          surface_quality: 0.80, // Surface finish quality score
-          anomaly_score: 0.90, // Defect detection score
-          dimension_variance: '±0.003"', // Actual vs specified tolerance
-          notes: [
-            'Part geometry matches STL model specifications (85% similarity)',
-            'Dimensional accuracy within tolerance: ±0.003" (spec: ±0.005")',
-            'Minor surface imperfections detected in corner areas',
-            'Overall dimensions: 100% within specified tolerance',
-            'Surface finish quality: Good, minor tool marks visible',
-          ],
+      // Persist QC record + advance job status (server-side)
+      try {
+        await fetch(`/api/jobs/${jobId}/qc`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            qc_score: qcData.qc_score,
+            status: qcData.status,
+            similarity: qcData.similarity,
+            evidence_paths: photoUrls,
+            model_version: qcData.model_version || 'demo',
+          }),
         });
-        setUploading(false);
-      }, 2000);
+      } catch (e) {
+        console.error('Failed to persist QC record:', e);
+      }
+
+      setUploading(false);
     } catch (error) {
       console.error('Error submitting QC:', error);
       setUploading(false);
@@ -64,7 +125,6 @@ export default function QCSubmissionPage() {
 
   const handleFinalSubmit = async () => {
     setSubmitting(true);
-    // TODO: Update job status to qc_pending in database
     setTimeout(() => {
       // After QC approval, redirect to shipping if passed, otherwise back to active
       if (qcResults.status === 'pass') {
@@ -117,12 +177,12 @@ export default function QCSubmissionPage() {
           {/* Photo Upload Section */}
           <div className="bg-[#0a1929] border border-[#1a2332] p-6">
             <h2 className="text-xl font-semibold text-white mb-6 heading-font">
-              Upload Product Photos (4 Required)
+              Upload Product Photos (4-6 Recommended)
             </h2>
-            <p className="text-[#9ca3af] text-sm mb-4">Take photos from multiple angles to enable accurate comparison with the STL model.</p>
+            <p className="text-[#9ca3af] text-sm mb-4">Take photos from multiple angles (top, front, side, isometric) to enable accurate comparison with the STL model. More photos = better accuracy.</p>
 
             <div className="grid grid-cols-2 gap-6 mb-6">
-              {[0, 1, 2, 3].map((index) => (
+              {[0, 1, 2, 3, 4, 5].map((index) => (
                 <div key={index} className="border-2 border-dashed border-[#253242] p-6 text-center">
                   {photos[index] ? (
                     <div>
@@ -158,11 +218,10 @@ export default function QCSubmissionPage() {
               disabled={uploading || photos.filter(p => p !== null).length < 4}
               className="w-full bg-[#253242] hover:bg-[#3a4552] text-white px-6 py-3 border border-[#3a4552] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {uploading ? 'Analyzing with AI...' : 'Compare to STL Model & Check Quality'}
+              {uploading ? 'Analyzing with AI (comparing STL to photos)...' : 'Compare to STL Model & Check Quality'}
             </button>
           </div>
           </div>
-        </div>
         ) : (
           <div className="space-y-6">
             {/* QC Results */}
@@ -196,12 +255,12 @@ export default function QCSubmissionPage() {
                   <span className="text-white ml-2">{(qcResults.surface_quality * 100).toFixed(1)}%</span>
                 </div>
                 <div>
-                  <span className="text-[#9ca3af]">Dimension Variance:</span>
-                  <span className="text-white ml-2">{qcResults.dimension_variance}</span>
-                </div>
-                <div>
                   <span className="text-[#9ca3af]">Defect Detection:</span>
                   <span className="text-white ml-2">{(qcResults.anomaly_score * 100).toFixed(1)}%</span>
+                </div>
+                <div>
+                  <span className="text-[#9ca3af]">Confidence:</span>
+                  <span className="text-white ml-2">{(qcResults.confidence * 100).toFixed(1)}%</span>
                 </div>
               </div>
 

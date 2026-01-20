@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Get STL file URL from job
-    const stlFileUrl = job.stl_file_url || null;
+    const stlFileUrl = job.stl_url || job.stl_file_url || job.stl_path || null;
     
     // Call FastAPI F3 Quality Check endpoint
     const response = await fetch(`${FASTAPI_URL}/api/ai/qc/`, {

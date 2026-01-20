@@ -6,8 +6,6 @@ Recommends the best manufacturers for a given job based on equipment, history, l
 import numpy as np
 from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
-from sklearn.preprocessing import StandardScaler
 import joblib
 import os
 
@@ -67,13 +65,10 @@ class MakerRankingModel:
     """
     
     def __init__(self, model_path: Optional[str] = None):
-        self.scaler = StandardScaler()
-        self.model = GradientBoostingRegressor(
-            n_estimators=100,
-            max_depth=5,
-            learning_rate=0.1,
-            random_state=42
-        )
+        # Demo-safe runtime: avoid scikit-learn dependency (Python 3.13 install issues).
+        # We keep the public API identical and use the heuristic path unless a trained model is loaded.
+        self.scaler = None
+        self.model = None
         self.feature_names = [
             'equipment_match_score',
             'tolerance_match',  # 1.0 if tier matches, 0.5 if adjacent, 0.0 if far
@@ -180,8 +175,9 @@ class MakerRankingModel:
             score = max(0.0, min(1.0, score))  # clamp to [0, 1]
         else:
             # Scale features and predict
-            features_scaled = self.scaler.transform(features)
-            score = float(self.model.predict(features_scaled)[0])
+            # If a trained model is loaded, it must provide a predict() method.
+            # In the demo environment, this is typically not used.
+            score = float(self.model.predict(features)[0])
             score = max(0.0, min(1.0, score))  # clamp to [0, 1]
         
         # Get explanations
@@ -269,8 +265,7 @@ class MakerRankingModel:
     
     def train(self, X: np.ndarray, y: np.ndarray):
         """Train the model on historical data"""
-        X_scaled = self.scaler.fit_transform(X)
-        self.model.fit(X_scaled, y)
+        raise NotImplementedError("Training is not enabled in the demo runtime. Use Python 3.11/3.12 + scikit-learn.")
         self.is_trained = True
     
     def save_model(self, model_path: str):
